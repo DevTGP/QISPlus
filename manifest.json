@@ -1,20 +1,25 @@
 {
     "name": "QISplus",
     "description": "Some features for QIS",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "manifest_version": 3,
     "host_permissions": [
         "https://qis.hochschule-trier.de/qisserver/*"
     ],
     "permissions": [
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage"
     ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "QISPlus"
+    },
     "content_scripts": [
         {
             "js": ["main.js"],
             "matches": [
-				"https://qis.hochschule-trier.de/qisserver/*"
+                "https://qis.hochschule-trier.de/qisserver/*"
             ],
             "run_at": "document_end"
         }
