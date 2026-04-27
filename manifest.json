@@ -1,7 +1,7 @@
 {
     "name": "QISplus",
     "description": "Some features for QIS",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "manifest_version": 3,
     "host_permissions": [
         "https://qis.hochschule-trier.de/qisserver/*"
