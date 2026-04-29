@@ -12,7 +12,7 @@
         }
 
         body {
-            width: 210px;
+            width: 230px;
             font-family: sans-serif;
             font-size: 13px;
             background: #f7fbff;
@@ -113,10 +113,56 @@
             color: #aaa;
             text-align: right;
         }
+
+        /* ---------- Update banner ---------- */
+        .qp-update {
+            display: none;            /* shown by popup.js when an update exists */
+            background: #fff8e1;
+            border: 1px solid #ffd54f;
+            border-radius: 5px;
+            padding: 8px 10px;
+            margin-bottom: 10px;
+            font-size: 0.82em;
+            line-height: 1.4;
+        }
+
+        .qp-update-title {
+            font-weight: 700;
+            color: #b8860b;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .qp-update-body {
+            color: #5b3e00;
+            margin-bottom: 7px;
+        }
+
+        .qp-update-body b { color: #ca5116; }
+
+        .qp-update-btn {
+            display: inline-block;
+            padding: 4px 9px;
+            background: #ca5116;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: background 0.15s;
+        }
+
+        .qp-update-btn:hover {
+            background: #a33e0f;
+        }
     </style>
 </head>
 <body>
 <div class="qp-header">📊 QISPlus</div>
+
+<div class="qp-update" id="qp-update" role="status" aria-live="polite"></div>
 
 <div class="qp-row">
     <span class="qp-label">Notenübersicht</span>
@@ -129,8 +175,8 @@
 <div class="qp-status" id="qp-status">Aktiv</div>
 
 <hr/>
-<div class="qp-version">v0.6.2</div>
+<div class="qp-version" id="qp-version">v–</div>
 
-<script src="popup.js"></script>
+<script src="popup.js" type="module"></script>
 </body>
 </html>

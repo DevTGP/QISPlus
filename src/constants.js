@@ -16,10 +16,26 @@ export const WIDGET_ID = 'qisplus-widget';
 // chrome.storage.local keys
 // ---------------------------------------------------------------------------
 export const STORAGE_KEYS = /** @type {const} */ ({
-  ENABLED:  'qisplus_enabled',
-  IMPROVE:  'qisplus_improve',
-  HISTORY:  'qisplus_history',
+  ENABLED:       'qisplus_enabled',
+  IMPROVE:       'qisplus_improve',
+  HISTORY:       'qisplus_history',
+  UPDATE_CACHE:  'qisplus_update_cache',
 });
+
+// ---------------------------------------------------------------------------
+// GitHub release source – used by src/update.js to check for new versions.
+// Keep these in one place so a future fork only has to change a single line.
+// ---------------------------------------------------------------------------
+export const GITHUB = /** @type {const} */ ({
+  OWNER:        'DevTGP',
+  REPO:         'QISPlus',
+  RELEASES_URL: 'https://github.com/DevTGP/QISPlus/releases',
+  API_LATEST:   'https://api.github.com/repos/DevTGP/QISPlus/releases/latest',
+  API_TAGS:     'https://api.github.com/repos/DevTGP/QISPlus/tags',
+});
+
+/** Update-check cache TTL in milliseconds (6 hours). */
+export const UPDATE_TTL_MS = 6 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Brand / UI colours (all inline styles reference these)
