@@ -225,7 +225,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
       }
     }
   } else if (rowType === 'improving') {
-    // Show current grade → ? (or new grade if improvement already graded)
+    // Show current grade → ? (or "1.00" assumption when simulation is on)
     if (m.passedGrade !== null) {
       const cur = el('span', {
         fontWeight: '600',
@@ -242,11 +242,25 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
       arrow.textContent = ' →';
       gradeCell.append(arrow);
 
-      // If a new BE grade in currentSem is already recorded, show it;
-      // otherwise show "?"
-      const newGradeSpan = el('span', { color: COLORS.GREY_TEXT, fontSize: '0.82em' });
-      newGradeSpan.textContent = ' ?';
-      gradeCell.append(newGradeSpan);
+      // When the simulation is on, the calculation treats this module as
+      // 1.0 – mirror that visually so the row matches what the global stats
+      // are doing. Otherwise stay agnostic with a "?".
+      if (withImprovement && m.improvable) {
+        const sim = el('span', {
+          fontWeight: '600',
+          color:      COLORS.GREEN,
+          fontSize:   '0.9em',
+        });
+        sim.textContent = ' 1.00';
+        gradeCell.append(sim);
+      } else {
+        const placeholder = el('span', {
+          color:    COLORS.GREY_TEXT,
+          fontSize: '0.82em',
+        });
+        placeholder.textContent = ' ?';
+        gradeCell.append(placeholder);
+      }
     }
   } else {
     // ongoing

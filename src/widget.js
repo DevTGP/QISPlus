@@ -29,18 +29,34 @@ import {
 import { getBool, setBool } from './storage.js';
 
 // ---------------------------------------------------------------------------
-// markImprovable – tag the most-recently-passed non-improving modules
+// markImprovable – tag every module whose grade gets replaced by 1.0 in the
+// improvement simulation.
 // ---------------------------------------------------------------------------
 
 /**
- * Find the highest passedSemNum among modules that are neither improving nor
- * ongoing, then set m.improvable = true on every module in that semester.
- * Returns the semester label of the "improvable" semester (for the improve bar).
+ * Tag modules that are subject to the "improvement" simulation, i.e. whose
+ * grade is replaced by 1.0 when the toggle is on.
+ *
+ * Two disjoint sources qualify a module as `improvable`:
+ *
+ *  1. **Active improvement** – `isImproving === true`. The user has already
+ *     registered a PNV retake this semester, so this is the strongest
+ *     possible "I am actually improving this" signal.
+ *
+ *  2. **Speculative candidate** – the module is from the most recent fully
+ *     passed semester (the typical "what if I retake last semester?" case).
+ *     Active and ongoing modules are excluded from the search for that
+ *     semester since they don't yet have a settled grade.
+ *
+ * Returns the label of the speculative semester (for the subtitle in the
+ * improvement bar). If no speculative candidates exist – e.g. only active
+ * improvements – the empty string is returned.
  *
  * @param {import('./stats.js').SemesterGroup[]} groups
- * @returns {string}  semLabel of the improvable semester, or ''
+ * @returns {string}  semLabel of the speculative semester, or ''
  */
 function markImprovable(groups) {
+  // ---- 1. Find the latest fully-passed semester (skip ongoing/improving)
   let maxSemNum = -Infinity;
   let maxLabel  = '';
 
@@ -54,15 +70,16 @@ function markImprovable(groups) {
     }
   }
 
-  if (maxSemNum === -Infinity) return '';
-
+  // ---- 2. Mark improvable: active improvement OR latest passed semester
   for (const g of groups) {
     for (const m of g.passed) {
-      m.improvable = m.passedSemNum === maxSemNum && !m.isImproving && !m.isOngoing;
+      const isLatestPassed =
+        !m.isImproving && !m.isOngoing && m.passedSemNum === maxSemNum;
+      m.improvable = m.isImproving || isLatestPassed;
     }
   }
 
-  return maxLabel;
+  return maxSemNum === -Infinity ? '' : maxLabel;
 }
 
 // ---------------------------------------------------------------------------
