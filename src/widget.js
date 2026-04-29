@@ -10,7 +10,7 @@
 // updates the stats displays in-place – no full DOM replacement.
 // ---------------------------------------------------------------------------
 
-import { WIDGET_ID, STORAGE_KEYS, COLORS, TOTAL_ECTS, BORDER_RADIUS } from './constants.js';
+import { WIDGET_ID, STORAGE_KEYS, COLORS, BORDER_RADIUS } from './constants.js';
 import {
   buildModuleMap,
   buildSemesterGroups,
@@ -19,8 +19,6 @@ import {
 } from './stats.js';
 import {
   el,
-  fmt,
-  gradeColor,
   buildProgressBar,
   buildStatBadges,
   buildTable,
@@ -173,16 +171,7 @@ export function buildWidget(parseResult) {
   // --- Table box (replaced each render) --------------------------------
   const tableBox = el('div', { marginTop: '8px', overflowX: 'auto' });
 
-  // --- Best achievable box ---------------------------------------------
-  const bestBox = el('div', {
-    marginTop:  '8px',
-    fontSize:   '0.82em',
-    color:      COLORS.GREY_TEXT,
-    fontStyle:  'italic',
-    textAlign:  'right',
-  });
-
-  widget.append(title, progressBox, badgesBox, improveBar, ctrlBar, tableBox, bestBox);
+  widget.append(title, progressBox, badgesBox, improveBar, ctrlBar, tableBox);
 
   // ------------------------------------------------------------------
   // Restore persisted toggle states
@@ -213,9 +202,13 @@ export function buildWidget(parseResult) {
     progressBox.innerHTML = '';
     progressBox.append(buildProgressBar(gStats.earnedEcts, gStats.remaining));
 
-    // Update badges
+    // Update badges (Ø, ECTS, bestmöglicher Schnitt)
     badgesBox.innerHTML = '';
-    badgesBox.append(buildStatBadges(gStats.currentAvg, gStats.earnedEcts));
+    badgesBox.append(buildStatBadges(
+      gStats.currentAvg,
+      gStats.earnedEcts,
+      gStats.currentAvg !== null ? gStats.bestAchievable : null,
+    ));
 
     // Update improve-bar subtitle
     const subtitle = widget.querySelector('#qp-imp-subtitle');
@@ -239,11 +232,6 @@ export function buildWidget(parseResult) {
     }
 
     tableBox.append(table);
-
-    // Best achievable
-    bestBox.textContent = gStats.currentAvg !== null
-      ? `Bestmöglicher Schnitt (alle restlichen Module 1,0): ${fmt(gStats.bestAchievable)}`
-      : '';
   }
 
   // ------------------------------------------------------------------

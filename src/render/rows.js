@@ -262,12 +262,11 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
   );
 
   // ------------------------------------------------------------------
-  // Semester cell  (hidden when grouping by semester)
+  // Semester cell  (always visible – also in group mode, so the
+  // semester is identifiable per row even when scanning the table
+  // outside of the group header context).
   // ------------------------------------------------------------------
-  const semCell = tdEl({
-    textAlign: 'center',
-    display:   sortCol === 'group' ? 'none' : 'table-cell',
-  });
+  const semCell = tdEl({ textAlign: 'center' });
   const semSpan = el('span', { fontSize: '0.82em', color: COLORS.GREY_TEXT });
   semSpan.textContent = m.passedSem ?? '–';
   semCell.append(semSpan);

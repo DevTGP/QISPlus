@@ -110,18 +110,24 @@ export function buildProgressBar(earnedEcts, remaining, totalEcts = TOTAL_ECTS) 
 // ---------------------------------------------------------------------------
 
 /**
- * Build the pair of summary badges shown beneath the progress bar:
- *   [ Ø 1.70 ]   [ 30 ECTS ]
+ * Build the row of summary badges shown beneath the progress bar:
+ *   [ Ø 1.70 ]   [ 30 ECTS ]   [ Bestm. Ø 1.45 ]
  *
- * @param {number|null} avg   Global weighted average (null if no passed modules)
- * @param {number}      ects  Total earned ECTS
+ * The "best achievable" badge is rendered with a subtle dashed border so
+ * it reads as a *projection* rather than a hard fact, but lives next to
+ * the other key numbers so it is visible at a glance.
+ *
+ * @param {number|null}      avg             Global weighted average (null if no passed modules)
+ * @param {number}           ects            Total earned ECTS
+ * @param {number|null}      [bestAchievable] Best achievable global average (omit/null to hide)
  * @returns {HTMLElement}
  */
-export function buildStatBadges(avg, ects) {
+export function buildStatBadges(avg, ects, bestAchievable = null) {
   const wrapper = el('div', {
     display:      'flex',
     gap:          '8px',
     flexWrap:     'wrap',
+    alignItems:   'center',
     marginBottom: '10px',
   });
 
@@ -132,6 +138,16 @@ export function buildStatBadges(avg, ects) {
   }
 
   wrapper.append(buildBadge(`${ects}&thinsp;ECTS`, COLORS.TEAL));
+
+  if (bestAchievable !== null && Number.isFinite(bestAchievable)) {
+    const bestBadge = buildBadge(
+      `Bestm.&thinsp;Ø&thinsp;${fmt(bestAchievable)}`,
+      gradeColor(bestAchievable),
+      { border: `1px dashed ${COLORS.WHITE}` }
+    );
+    bestBadge.title = 'Bestmöglicher Notenschnitt – verbleibende Module mit 1,0 angenommen';
+    wrapper.append(bestBadge);
+  }
 
   return wrapper;
 }
