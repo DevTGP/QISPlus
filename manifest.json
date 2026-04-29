@@ -1,27 +1,49 @@
 {
-    "name": "QISplus",
-    "description": "Some features for QIS",
-    "version": "0.5.0",
-    "manifest_version": 3,
-    "host_permissions": [
+  "name": "QISPlus",
+  "description": "Grade dashboard for Hochschule Trier QIS",
+  "version": "0.6.0",
+  "manifest_version": 3,
+  "host_permissions": [
+    "https://qis.hochschule-trier.de/qisserver/*"
+  ],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "QISPlus"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "main.js"
+      ],
+      "matches": [
         "https://qis.hochschule-trier.de/qisserver/*"
-    ],
-    "permissions": [
-        "activeTab",
-        "scripting",
-        "storage"
-    ],
-    "action": {
-        "default_popup": "popup.html",
-        "default_title": "QISPlus"
-    },
-    "content_scripts": [
-        {
-            "js": ["main.js"],
-            "matches": [
-                "https://qis.hochschule-trier.de/qisserver/*"
-            ],
-            "run_at": "document_end"
-        }
-    ]
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/constants.js",
+        "src/utils.js",
+        "src/storage.js",
+        "src/parser.js",
+        "src/stats.js",
+        "src/widget.js",
+        "src/render/core.js",
+        "src/render/progress.js",
+        "src/render/table.js",
+        "src/render/rows.js",
+        "src/render/index.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }
