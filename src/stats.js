@@ -53,9 +53,10 @@ export function getReasonLabel(status, remark) {
  * @property {string}      name
  * @property {number}      ects
  * @property {number|null} passedGrade
- * @property {string|null} passedSem
+ * @property {string|null} passedSem        Semester of the passing attempt
  * @property {number}      passedSemNum
- * @property {string|null} improvementSem
+ * @property {string|null} improvementSem   Semester of the active PNV attempt
+ * @property {string|null} ongoingSem       Semester of the active first-try AN
  * @property {boolean}     isOngoing
  * @property {boolean}     isImproving
  * @property {boolean}     [improvable]   – set later by markImprovable()
@@ -148,7 +149,8 @@ export function buildModuleMap(attempts, currentSem, currentSemNum) {
       passedGrade,
       passedSem,
       passedSemNum,
-      improvementSem: isImproving ? currentSem : null,
+      improvementSem: isImproving ? (pnvRow.semester || currentSem) : null,
+      ongoingSem:     isOngoing   ? (plainAN.semester || currentSem) : null,
       isOngoing,
       isImproving,
     };

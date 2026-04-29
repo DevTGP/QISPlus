@@ -155,8 +155,11 @@ const ROW_BG = {
  * @param {import('../stats.js').ModuleInfo} m
  * @param {number}  rowIndex          Used for alternating row colour
  * @param {boolean} withImprovement   Improvement simulation active?
- * @param {'passed'|'ongoing'|'improving'} rowType
- * @param {string}  sortCol           Current sort column ('group' hides Semester)
+ * @param {'passed'|'ongoing'|'improving'} rowType  Determines styling and
+ *                                        which semester to show (passedSem /
+ *                                        improvementSem / ongoingSem).
+ * @param {string}  sortCol           Current sort column (kept for callers,
+ *                                        currently unused inside this fn)
  * @returns {HTMLTableRowElement}
  */
 export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
@@ -279,10 +282,20 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
   // Semester cell  (always visible – also in group mode, so the
   // semester is identifiable per row even when scanning the table
   // outside of the group header context).
+  //
+  // The semester to show depends on the row's role:
+  //   • passed    → semester of the passing attempt (m.passedSem)
+  //   • improving → semester where the PNV is registered (m.improvementSem)
+  //   • ongoing   → semester where the first-try AN is registered (m.ongoingSem)
   // ------------------------------------------------------------------
+  const displaySem =
+    rowType === 'improving' ? (m.improvementSem ?? m.passedSem) :
+    rowType === 'ongoing'   ? m.ongoingSem :
+    m.passedSem;
+
   const semCell = tdEl({ textAlign: 'center' });
   const semSpan = el('span', { fontSize: '0.82em', color: COLORS.GREY_TEXT });
-  semSpan.textContent = m.passedSem ?? '–';
+  semSpan.textContent = displaySem ?? '–';
   semCell.append(semSpan);
 
   row.append(nameCell, gradeCell, ectsCell, semCell);
