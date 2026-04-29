@@ -68,7 +68,12 @@ export function getReasonLabel(status, remark) {
  *  • passedGrade = grade of the **lowest-numbered** (= best) BE attempt.
  *    If a retake produced a new BE, use the most recent BE's grade.
  *    If a PNV attempt in currentSem already has a grade (BE), use that.
- *  • isOngoing  = AN, no remark, currentSem, no prior BE
+ *  • ects        = ECTS of the same passing attempt. Note + ECTS always
+ *    come from one consistent source. The Konto-header ECTS are only a
+ *    fallback for modules that have no BE attempt yet, because QIS writes
+ *    the header ECTS as 0 whenever an attempt is still pending (Status PV)
+ *    – even if a previous attempt already passed.
+ *  • isOngoing   = AN, no remark, currentSem, no prior BE
  *  • isImproving = AN, remark = PNV, currentSem, prior BE exists
  *
  * @param {import('./parser.js').ExamAttempt[]} attempts
@@ -83,8 +88,8 @@ export function buildModuleMap(attempts, currentSem, currentSemNum) {
   const map = new Map();
 
   for (const [name, group] of byModule) {
-    const firstAttempt = group[0];
-    const moduleEcts   = firstAttempt.moduleEcts;
+    const firstAttempt   = group[0];
+    const headerEcts     = firstAttempt.moduleEcts;  // fallback only
 
     // All BE (passed) attempts for this module
     const beAttempts = group.filter(a => a.status === 'BE');
@@ -100,36 +105,37 @@ export function buildModuleMap(attempts, currentSem, currentSemNum) {
     // Plain registration (no remark) in currentSem
     const plainAN = currentAN.find(a => a.remark === '') ?? null;
 
-    // --- Determine best BE grade ------------------------------------
-    let passedGrade   = null;
-    let passedSem     = null;
-    let passedSemNum  = 0;
+    // --- Determine the authoritative passing attempt ----------------
+    // The grade AND ects always come from the same attempt so the two
+    // values stay in sync (this is what fixes the IT-Sicherheit case
+    // where the Konto-header reported 0 ECTS while a previous BE row
+    // still held the real ECTS).
+    let passedAttempt = null;
 
     if (beAttempts.length > 0) {
-      // If there's a PNV row that itself became a BE in the current sem,
-      // find it among beAttempts (same pruefNr and same sem).
+      // If a PNV row in the current semester already produced a BE,
+      // that retake supersedes the previous result (same pruefNr).
       const pnvBE = pnvRow
         ? beAttempts.find(a =>
             a.pruefNr === pnvRow.pruefNr && a.semNum === currentSemNum
           )
         : null;
 
-      if (pnvBE) {
-        // PNV attempt now has a result – use that grade.
-        passedGrade  = pnvBE.grade;
-        passedSem    = pnvBE.semester;
-        passedSemNum = pnvBE.semNum;
-      } else {
-        // Best (lowest) grade among all BE attempts, preferring the most
-        // recent one when grades are equal (retake scenario).
-        const best = minBy(beAttempts, a => a.grade ?? Infinity);
-        if (best) {
-          passedGrade  = best.grade;
-          passedSem    = best.semester;
-          passedSemNum = best.semNum;
-        }
-      }
+      // Otherwise pick the best (lowest) grade among all BE attempts.
+      passedAttempt = pnvBE ?? minBy(beAttempts, a => a.grade ?? Infinity);
     }
+
+    const passedGrade  = passedAttempt?.grade   ?? null;
+    const passedSem    = passedAttempt?.semester ?? null;
+    const passedSemNum = passedAttempt?.semNum   ?? 0;
+
+    // ECTS: prefer the passing attempt's own ECTS (always > 0 for BE
+    // rows in QIS). Fall back to the Konto-header value for modules
+    // that have no BE yet (display column shows "–" anyway in that case,
+    // but keeping the value lets future code use it for planning views).
+    const ects = (passedAttempt && passedAttempt.ects > 0)
+      ? passedAttempt.ects
+      : headerEcts;
 
     const hasBE       = passedGrade !== null;
     const isImproving = hasBE && pnvRow !== null;
@@ -138,7 +144,7 @@ export function buildModuleMap(attempts, currentSem, currentSemNum) {
     /** @type {ModuleInfo} */
     const info = {
       name,
-      ects:           moduleEcts,
+      ects,
       passedGrade,
       passedSem,
       passedSemNum,
