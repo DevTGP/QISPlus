@@ -294,6 +294,39 @@ export function buildSemesterGroups(attempts, moduleMap, currentSemNum, showHist
 // ---------------------------------------------------------------------------
 
 /**
+ * @typedef {Object} ReverseCalcResult
+ * @property {number}  needed      Required average grade in the remaining ECTS
+ * @property {boolean} feasible    true when 1.0 ≤ needed ≤ 4.0
+ * @property {boolean} trivial     true when needed > 4.0 (target already guaranteed)
+ * @property {boolean} impossible  true when needed < 1.0 (target unachievable)
+ */
+
+/**
+ * Calculate the weighted-average grade needed in the remaining ECTS to reach a
+ * desired overall final grade ("Notenziel-Reverse-Calculator").
+ *
+ * Formula:  needed = (target × totalEcts − weightedSum) / remaining
+ *
+ * Returns null when there are no remaining ECTS (degree already complete).
+ *
+ * @param {number} targetGrade   Desired final weighted average, e.g. 1.7
+ * @param {number} weightedSum   Σ (grade × ects) across all passed modules
+ * @param {number} remaining     ECTS not yet earned (totalEcts − earnedEcts)
+ * @param {number} totalEcts     Degree ECTS target (user-configurable)
+ * @returns {ReverseCalcResult|null}
+ */
+export function calcNeededAvg(targetGrade, weightedSum, remaining, totalEcts) {
+  if (remaining <= 0) return null;
+  const needed = (targetGrade * totalEcts - weightedSum) / remaining;
+  return {
+    needed,
+    feasible:   needed >= 1.0 && needed <= 4.0,
+    trivial:    needed > 4.0,
+    impossible: needed < 1.0,
+  };
+}
+
+/**
  * Compute the weighted average and ECTS total for an array of ModuleInfo.
  * Returns null when the array is empty (no passed modules to average).
  *

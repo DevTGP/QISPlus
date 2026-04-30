@@ -16,9 +16,12 @@ import {
   buildSemesterGroups,
   calcGlobalStats,
   calcSemStats,
+  calcNeededAvg,
 } from './stats.js';
 import {
   el,
+  fmt,
+  gradeColor,
   buildProgressBar,
   buildStatBadges,
   buildTable,
@@ -139,6 +142,8 @@ export function buildWidget(parseResult) {
   let improve     = false;
   let showHistory = false;
   let totalEcts   = DEFAULT_TOTAL_ECTS;
+  let targetGrade = null;             // Notenziel-Reverse-Calculator input (null = no input)
+  let lastGStats  = null;             // last calcGlobalStats result, used by updateReverseCalc
 
   // ------------------------------------------------------------------
   // Build the stable module map (does not change with UI state)
@@ -180,6 +185,9 @@ export function buildWidget(parseResult) {
   // --- Stat badges placeholder ----------------------------------------
   const badgesBox = el('div', {});
 
+  // --- Reverse calculator (built once, result updated reactively) -----
+  const reverseCalcBox = buildReverseCalcBox();
+
   // --- Improve bar ----------------------------------------------------
   const improveBar = buildImproveBar();
 
@@ -189,7 +197,7 @@ export function buildWidget(parseResult) {
   // --- Table box (replaced each render) --------------------------------
   const tableBox = el('div', { marginTop: '8px', overflowX: 'auto' });
 
-  widget.append(title, progressBox, badgesBox, improveBar, ctrlBar, tableBox);
+  widget.append(title, progressBox, badgesBox, reverseCalcBox, improveBar, ctrlBar, tableBox);
 
   // ------------------------------------------------------------------
   // Restore persisted toggle states + configurable ECTS target
@@ -232,6 +240,7 @@ export function buildWidget(parseResult) {
     const groups  = buildSemesterGroups(attempts, moduleMap, currentSemNum, showHistory);
     const impSem  = markImprovable(groups);
     const gStats  = calcGlobalStats(groups, improve, currentSemNum, totalEcts);
+    lastGStats    = gStats;
 
     // Update progress bar
     progressBox.innerHTML = '';
@@ -252,6 +261,9 @@ export function buildWidget(parseResult) {
         ? `Letzte abgeschlossene Semester: ${impSem}`
         : 'Keine verbesserbaren Module gefunden';
     }
+
+    // Update reverse calculator result
+    updateReverseCalc();
 
     // Update control bar button states
     updateCtrlBar();
@@ -342,6 +354,162 @@ export function buildWidget(parseResult) {
       }
     }
     render();
+  }
+
+  // ------------------------------------------------------------------
+  // Reverse calculator box (built once; result div updated reactively)
+  // ------------------------------------------------------------------
+
+  /**
+   * Build the "Notenziel-Reverse-Calculator" section.
+   * The box is created once; only the result <div> changes when the user
+   * types a target grade or when the global stats change.
+   */
+  function buildReverseCalcBox() {
+    const box = el('div', {
+      background:   '#eef6ff',
+      border:       '1px solid #b8d4ef',
+      borderRadius: BORDER_RADIUS,
+      padding:      '6px 10px',
+      marginBottom: '8px',
+    });
+
+    // --- top row: label + input -----------------------------------
+    const topRow = el('div', {
+      display:     'flex',
+      alignItems:  'center',
+      gap:         '8px',
+      marginBottom: '3px',
+    });
+
+    const lbl = el('span', {
+      fontWeight: '600',
+      fontSize:   '0.88em',
+      color:      COLORS.TEAL,
+      whiteSpace: 'nowrap',
+    }, '🎯 Ziel-Schnitt:');
+
+    const input = document.createElement('input');
+    input.type        = 'number';
+    input.min         = '1.0';
+    input.max         = '4.0';
+    input.step        = '0.1';
+    input.placeholder = 'z.B. 1.7';
+    input.id          = 'qp-target-grade';
+    Object.assign(input.style, {
+      width:        '72px',
+      padding:      '2px 6px',
+      border:       '1px solid #b8d4ef',
+      borderRadius: '4px',
+      fontSize:     '0.88em',
+      fontFamily:   'inherit',
+      color:        '#222',
+      background:   '#fff',
+      textAlign:    'right',
+      outline:      'none',
+    });
+
+    input.addEventListener('focus', () => {
+      input.style.borderColor = COLORS.TEAL;
+    });
+    input.addEventListener('blur', () => {
+      input.style.borderColor = '#b8d4ef';
+    });
+
+    topRow.append(lbl, input);
+
+    // --- result line -----------------------------------------------
+    const resultEl = el('div', {
+      fontSize:  '0.80em',
+      color:     COLORS.GREY_TEXT,
+      fontStyle: 'italic',
+    });
+    resultEl.id          = 'qp-reverse-result';
+    resultEl.textContent = 'Ziel-Schnitt eingeben, um den benötigten Durchschnitt zu sehen.';
+
+    box.append(topRow, resultEl);
+
+    // Update targetGrade and re-run calculator on every keystroke
+    input.addEventListener('input', () => {
+      const raw = parseFloat(input.value);
+      targetGrade = (Number.isFinite(raw) && raw >= 1.0 && raw <= 4.0) ? raw : null;
+      updateReverseCalc();
+    });
+
+    return box;
+  }
+
+  /**
+   * Refresh the reverse calculator result display.
+   * Reads the current `targetGrade` and `lastGStats` closure variables.
+   * Safe to call before the first render (lastGStats is null → no-op).
+   */
+  function updateReverseCalc() {
+    const resultEl = /** @type {HTMLElement|null} */ (
+      widget.querySelector('#qp-reverse-result')
+    );
+    if (!resultEl) return;
+
+    // Helper to set result appearance in one call
+    const setResult = (text, color, italic = false) => {
+      resultEl.textContent  = text;
+      resultEl.style.color  = color;
+      resultEl.style.fontStyle = italic ? 'italic' : 'normal';
+    };
+
+    if (targetGrade === null) {
+      setResult(
+        'Ziel-Schnitt eingeben, um den benötigten Durchschnitt zu sehen.',
+        COLORS.GREY_TEXT, true
+      );
+      return;
+    }
+
+    if (!lastGStats) return;
+
+    const { weightedSum, remaining, earnedEcts, currentAvg } = lastGStats;
+
+    if (earnedEcts === 0) {
+      setResult('Noch keine bestandenen Module vorhanden.', COLORS.GREY_TEXT, true);
+      return;
+    }
+
+    // Degree already complete (earnedEcts ≥ totalEcts)
+    if (remaining <= 0) {
+      if (currentAvg !== null) {
+        const met = currentAvg <= targetGrade;
+        setResult(
+          met
+            ? `Ziel erreicht – dein Schnitt (${fmt(currentAvg)}) liegt bei oder unter ${fmt(targetGrade)}.`
+            : `Ziel verfehlt – dein Schnitt (${fmt(currentAvg)}) liegt über ${fmt(targetGrade)}.`,
+          met ? COLORS.GREEN : COLORS.RED
+        );
+      }
+      return;
+    }
+
+    const result = calcNeededAvg(targetGrade, weightedSum, remaining, totalEcts);
+    if (!result) {
+      setResult('Keine Daten verfügbar.', COLORS.GREY_TEXT, true);
+      return;
+    }
+
+    if (result.impossible) {
+      setResult(
+        `Nicht mehr erreichbar – selbst mit 1,0 in allen verbleibenden ${remaining} ECTS.`,
+        COLORS.RED
+      );
+    } else if (result.trivial) {
+      setResult(
+        `Bereits sicher – das Ziel ist selbst bei schlechten Restleistungen erreichbar.`,
+        COLORS.GREEN
+      );
+    } else {
+      setResult(
+        `→ Du brauchst Ø ${fmt(result.needed)} in den verbleibenden ${remaining} ECTS.`,
+        gradeColor(result.needed)
+      );
+    }
   }
 
   // ------------------------------------------------------------------
