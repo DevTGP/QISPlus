@@ -10,9 +10,10 @@
 //   3. Check GitHub for newer releases and show a banner if one exists.
 // ---------------------------------------------------------------------------
 
-import { STORAGE_KEYS, GITHUB }                     from './src/constants.js';
+import { STORAGE_KEYS, GITHUB, THEMES }             from './src/constants.js';
 import { storageGet, storageSet, sendToActiveTab,
-         getTotalEcts, setTotalEcts }               from './src/storage.js';
+         getTotalEcts, setTotalEcts,
+         getTheme, setTheme }                       from './src/storage.js';
 import { getUpdateInfo, getCurrentVersion }          from './src/update.js';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,7 @@ const updateEl   = /** @type {HTMLElement} */      (document.getElementById('qp-
 const ectsInput  = /** @type {HTMLInputElement} */ (document.getElementById('qp-total-ects'));
 const ectsMinus  = /** @type {HTMLButtonElement} */ (document.getElementById('qp-ects-minus'));
 const ectsPlus   = /** @type {HTMLButtonElement} */ (document.getElementById('qp-ects-plus'));
+const themeSeg   = /** @type {HTMLElement} */      (document.getElementById('qp-theme-seg'));
 
 const ECTS_MIN = 1;
 const ECTS_MAX = 999;
@@ -163,10 +165,54 @@ ectsPlus.addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Theme picker (Auto / Hell / Dunkel)
+//
+// The popup is a separate document so it carries its own CSS variables
+// (defined inline in popup.html). The widget picks up the same theme via
+// chrome.storage.onChanged → applyTheme(). 'auto' clears the attribute so
+// the prefers-color-scheme media query takes over.
+// ---------------------------------------------------------------------------
+
+function paintThemeButtons(active) {
+  for (const btn of themeSeg.querySelectorAll('button')) {
+    const isOn = btn.dataset.theme === active;
+    btn.classList.toggle('is-active', isOn);
+    btn.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+  }
+}
+
+function applyPopupTheme(mode) {
+  if (mode === THEMES.AUTO) {
+    document.documentElement.removeAttribute('data-qp-theme');
+  } else {
+    document.documentElement.setAttribute('data-qp-theme', mode);
+  }
+  paintThemeButtons(mode);
+}
+
+async function initThemePicker() {
+  const stored = await getTheme();
+  applyPopupTheme(stored);
+}
+
+themeSeg.addEventListener('click', async (ev) => {
+  const btn = /** @type {HTMLElement|null} */ (ev.target instanceof HTMLElement
+    ? ev.target.closest('button[data-theme]')
+    : null);
+  if (!btn) return;
+  const mode = btn.dataset.theme;
+  if (mode !== THEMES.AUTO && mode !== THEMES.LIGHT && mode !== THEMES.DARK) return;
+  applyPopupTheme(mode);
+  await setTheme(mode);
+  // widget.js listens on chrome.storage.onChanged for STORAGE_KEYS.THEME
+});
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 
 renderVersion();
 initToggle();
 initEctsInput();
+initThemePicker();
 renderUpdateBanner();

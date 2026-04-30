@@ -10,7 +10,7 @@
 // updates the stats displays in-place – no full DOM replacement.
 // ---------------------------------------------------------------------------
 
-import { WIDGET_ID, STORAGE_KEYS, COLORS, BORDER_RADIUS, DEFAULT_TOTAL_ECTS } from './constants.js';
+import { WIDGET_ID, STORAGE_KEYS, CSS_VARS, BORDER_RADIUS, DEFAULT_TOTAL_ECTS } from './constants.js';
 import {
   buildModuleMap,
   buildSemesterGroups,
@@ -28,8 +28,10 @@ import {
   buildGroupHeader,
   buildModuleRow,
   buildHistoricalRow,
+  injectThemeStyles,
+  applyTheme,
 } from './render/index.js';
-import { getBool, setBool, getTotalEcts } from './storage.js';
+import { getBool, setBool, getTotalEcts, getTheme } from './storage.js';
 
 // ---------------------------------------------------------------------------
 // markImprovable – tag every module whose grade gets replaced by 1.0 in the
@@ -153,19 +155,26 @@ export function buildWidget(parseResult) {
   const moduleMap = buildModuleMap(attempts, currentSem, currentSemNum);
 
   // ------------------------------------------------------------------
+  // Inject theme stylesheet (once per page) – defines all --qp-* CSS
+  // custom properties for the light/dark palettes the widget consumes.
+  // ------------------------------------------------------------------
+  injectThemeStyles();
+
+  // ------------------------------------------------------------------
   // Widget shell
   // ------------------------------------------------------------------
   const widget = el('div', {
     id:           WIDGET_ID,
-    background:   COLORS.WIDGET_BG,
-    border:       `2px solid ${COLORS.WIDGET_BORDER}`,
+    background:   CSS_VARS.WIDGET_BG,
+    color:        CSS_VARS.WIDGET_FG,
+    border:       `2px solid ${CSS_VARS.WIDGET_BORDER}`,
     borderRadius: BORDER_RADIUS,
     padding:      '14px 16px',
     margin:       '16px 0',
     fontFamily:   'sans-serif',
     fontSize:     '14px',
     lineHeight:   '1.5',
-    boxShadow:    '0 2px 8px rgba(0,0,0,0.07)',
+    boxShadow:    CSS_VARS.WIDGET_SHADOW,
   });
   widget.id = WIDGET_ID;
 
@@ -173,7 +182,7 @@ export function buildWidget(parseResult) {
   const title = el('div', {
     fontWeight:   '700',
     fontSize:     '1.05em',
-    color:        COLORS.TEAL,
+    color:        CSS_VARS.TEAL,
     marginBottom: '10px',
     display:      'flex',
     alignItems:   'center',
@@ -202,22 +211,24 @@ export function buildWidget(parseResult) {
   widget.append(title, progressBox, badgesBox, reverseCalcBox, improveBar, ctrlBar, tableBox);
 
   // ------------------------------------------------------------------
-  // Restore persisted toggle states + configurable ECTS target
+  // Restore persisted toggle states + configurable ECTS target + theme
   // ------------------------------------------------------------------
   Promise.all([
     getBool(STORAGE_KEYS.IMPROVE,  false),
     getBool(STORAGE_KEYS.HISTORY,  false),
     getTotalEcts(),
-  ]).then(([imp, hist, ects]) => {
+    getTheme(),
+  ]).then(([imp, hist, ects, theme]) => {
     improve     = imp;
     showHistory = hist;
     totalEcts   = ects;
+    applyTheme(widget, theme);
     syncImproveToggle();
     render();
   });
 
-  // React to popup changes (TOTAL_ECTS written by popup.js) so the widget
-  // updates live while the popup is open.
+  // React to popup changes (TOTAL_ECTS / THEME written by popup.js) so the
+  // widget updates live while the popup is open.
   if (typeof chrome !== 'undefined' && chrome.storage) {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
@@ -227,6 +238,9 @@ export function buildWidget(parseResult) {
           totalEcts = newVal;
           render();
         }
+      }
+      if (STORAGE_KEYS.THEME in changes) {
+        applyTheme(widget, changes[STORAGE_KEYS.THEME].newValue);
       }
     });
   }
@@ -443,8 +457,8 @@ export function buildWidget(parseResult) {
    */
   function buildReverseCalcBox() {
     const box = el('div', {
-      background:   '#eef6ff',
-      border:       '1px solid #b8d4ef',
+      background:   CSS_VARS.REVERSE_BG,
+      border:       `1px solid ${CSS_VARS.REVERSE_BORDER}`,
       borderRadius: BORDER_RADIUS,
       padding:      '6px 10px',
       marginBottom: '8px',
@@ -461,7 +475,7 @@ export function buildWidget(parseResult) {
     const lbl = el('span', {
       fontWeight: '600',
       fontSize:   '0.88em',
-      color:      COLORS.TEAL,
+      color:      CSS_VARS.TEAL,
       whiteSpace: 'nowrap',
     }, '🎯 Ziel-Schnitt:');
 
@@ -475,21 +489,21 @@ export function buildWidget(parseResult) {
     Object.assign(input.style, {
       width:        '72px',
       padding:      '2px 6px',
-      border:       '1px solid #b8d4ef',
+      border:       `1px solid ${CSS_VARS.REVERSE_BORDER}`,
       borderRadius: '4px',
       fontSize:     '0.88em',
       fontFamily:   'inherit',
-      color:        '#222',
-      background:   '#fff',
+      color:        CSS_VARS.INPUT_FG,
+      background:   CSS_VARS.INPUT_BG,
       textAlign:    'right',
       outline:      'none',
     });
 
     input.addEventListener('focus', () => {
-      input.style.borderColor = COLORS.TEAL;
+      input.style.borderColor = CSS_VARS.TEAL;
     });
     input.addEventListener('blur', () => {
-      input.style.borderColor = '#b8d4ef';
+      input.style.borderColor = CSS_VARS.REVERSE_BORDER;
     });
 
     topRow.append(lbl, input);
@@ -497,7 +511,7 @@ export function buildWidget(parseResult) {
     // --- result line -----------------------------------------------
     const resultEl = el('div', {
       fontSize:  '0.80em',
-      color:     COLORS.GREY_TEXT,
+      color:     CSS_VARS.GREY_TEXT,
       fontStyle: 'italic',
     });
     resultEl.id          = 'qp-reverse-result';
@@ -536,7 +550,7 @@ export function buildWidget(parseResult) {
     if (targetGrade === null) {
       setResult(
         'Ziel-Schnitt eingeben, um den benötigten Durchschnitt zu sehen.',
-        COLORS.GREY_TEXT, true
+        CSS_VARS.GREY_TEXT, true
       );
       return;
     }
@@ -546,7 +560,7 @@ export function buildWidget(parseResult) {
     const { weightedSum, remaining, earnedEcts, currentAvg } = lastGStats;
 
     if (earnedEcts === 0) {
-      setResult('Noch keine bestandenen Module vorhanden.', COLORS.GREY_TEXT, true);
+      setResult('Noch keine bestandenen Module vorhanden.', CSS_VARS.GREY_TEXT, true);
       return;
     }
 
@@ -558,7 +572,7 @@ export function buildWidget(parseResult) {
           met
             ? `Ziel erreicht – dein Schnitt (${fmt(currentAvg)}) liegt bei oder unter ${fmt(targetGrade)}.`
             : `Ziel verfehlt – dein Schnitt (${fmt(currentAvg)}) liegt über ${fmt(targetGrade)}.`,
-          met ? COLORS.GREEN : COLORS.RED
+          met ? CSS_VARS.GREEN : CSS_VARS.RED
         );
       }
       return;
@@ -566,19 +580,19 @@ export function buildWidget(parseResult) {
 
     const result = calcNeededAvg(targetGrade, weightedSum, remaining, totalEcts);
     if (!result) {
-      setResult('Keine Daten verfügbar.', COLORS.GREY_TEXT, true);
+      setResult('Keine Daten verfügbar.', CSS_VARS.GREY_TEXT, true);
       return;
     }
 
     if (result.impossible) {
       setResult(
         `Nicht mehr erreichbar – selbst mit 1,0 in allen verbleibenden ${remaining} ECTS.`,
-        COLORS.RED
+        CSS_VARS.RED
       );
     } else if (result.trivial) {
       setResult(
         `Bereits sicher – das Ziel ist selbst bei schlechten Restleistungen erreichbar.`,
-        COLORS.GREEN
+        CSS_VARS.GREEN
       );
     } else {
       setResult(
@@ -596,8 +610,8 @@ export function buildWidget(parseResult) {
       display:        'flex',
       alignItems:     'center',
       justifyContent: 'space-between',
-      background:     '#fffbea',
-      border:         `1px solid #f0d070`,
+      background:     CSS_VARS.IMPROVE_BAR_BG,
+      border:         `1px solid ${CSS_VARS.IMPROVE_BAR_BORDER}`,
       borderRadius:   BORDER_RADIUS,
       padding:        '6px 10px',
       marginBottom:   '8px',
@@ -608,12 +622,12 @@ export function buildWidget(parseResult) {
     const label   = el('div', {
       fontWeight: '600',
       fontSize:   '0.88em',
-      color:      '#7a5800',
+      color:      CSS_VARS.IMPROVE_BAR_TEXT,
     }, '✨ Notenverbesserung simulieren');
 
     const subtitle = el('div', {
       fontSize: '0.78em',
-      color:    COLORS.GREY_TEXT,
+      color:    CSS_VARS.GREY_TEXT,
     });
     subtitle.id = 'qp-imp-subtitle';
     subtitle.textContent = '…';
@@ -639,7 +653,7 @@ export function buildWidget(parseResult) {
       position:     'absolute',
       cursor:       'pointer',
       top:          '0', left: '0', right: '0', bottom: '0',
-      background:   '#ccc',
+      background:   CSS_VARS.TOGGLE_OFF,
       borderRadius: '20px',
       transition:   'background 0.2s',
     });
@@ -651,7 +665,7 @@ export function buildWidget(parseResult) {
       width:        '14px',
       left:         '3px',
       bottom:       '3px',
-      background:   COLORS.WHITE,
+      background:   CSS_VARS.SURFACE,
       borderRadius: '50%',
       transition:   'transform 0.2s',
     });
@@ -659,7 +673,7 @@ export function buildWidget(parseResult) {
 
     checkbox.addEventListener('change', () => {
       improve = checkbox.checked;
-      slider.style.background = improve ? COLORS.ORANGE : '#ccc';
+      slider.style.background = improve ? CSS_VARS.ORANGE : CSS_VARS.TOGGLE_OFF;
       knob.style.transform    = improve ? 'translateX(16px)' : 'translateX(0)';
       setBool(STORAGE_KEYS.IMPROVE, improve);
       render();
@@ -681,7 +695,7 @@ export function buildWidget(parseResult) {
     const cb = improveBar._checkbox;
     if (!cb) return;
     cb.checked                       = improve;
-    improveBar._slider.style.background = improve ? COLORS.ORANGE : '#ccc';
+    improveBar._slider.style.background = improve ? CSS_VARS.ORANGE : CSS_VARS.TOGGLE_OFF;
     improveBar._knob.style.transform    = improve ? 'translateX(16px)' : 'translateX(0)';
   }
 
@@ -698,9 +712,9 @@ export function buildWidget(parseResult) {
 
     // Reset button
     const resetBtn = el('button', {
-      border:       `1px solid ${COLORS.ORANGE}`,
-      background:   COLORS.WHITE,
-      color:        COLORS.ORANGE,
+      border:       `1px solid ${CSS_VARS.ORANGE}`,
+      background:   CSS_VARS.SURFACE,
+      color:        CSS_VARS.ORANGE,
       borderRadius: '4px',
       padding:      '3px 10px',
       fontSize:     '0.80em',
@@ -718,9 +732,9 @@ export function buildWidget(parseResult) {
 
     // History button
     const histBtn = el('button', {
-      border:       `1px solid ${COLORS.TEAL}`,
-      background:   COLORS.WHITE,
-      color:        COLORS.TEAL,
+      border:       `1px solid ${CSS_VARS.TEAL}`,
+      background:   CSS_VARS.SURFACE,
+      color:        CSS_VARS.TEAL,
       borderRadius: '4px',
       padding:      '3px 10px',
       fontSize:     '0.80em',
@@ -738,9 +752,9 @@ export function buildWidget(parseResult) {
 
     // What-If Reset button (only visible when ≥1 hypothetical grade is set)
     const whatIfBtn = el('button', {
-      border:       `1px solid ${COLORS.TEAL_LIGHT}`,
-      background:   COLORS.WHITE,
-      color:        COLORS.TEAL_LIGHT,
+      border:       `1px solid ${CSS_VARS.TEAL_LIGHT}`,
+      background:   CSS_VARS.SURFACE,
+      color:        CSS_VARS.TEAL_LIGHT,
       borderRadius: '4px',
       padding:      '3px 10px',
       fontSize:     '0.80em',
@@ -785,8 +799,8 @@ export function buildWidget(parseResult) {
     histBtn.title         = histEnabled ? '' : 'Nur im Semestermodus verfügbar';
 
     // Highlight when active
-    histBtn.style.background    = showHistory && histEnabled ? COLORS.TEAL    : COLORS.WHITE;
-    histBtn.style.color         = showHistory && histEnabled ? COLORS.WHITE   : COLORS.TEAL;
+    histBtn.style.background    = showHistory && histEnabled ? CSS_VARS.TEAL    : CSS_VARS.SURFACE;
+    histBtn.style.color         = showHistory && histEnabled ? CSS_VARS.SURFACE   : CSS_VARS.TEAL;
 
     // What-If reset button visibility / label
     if (whatIfBtn) {

@@ -21,7 +21,20 @@ export const STORAGE_KEYS = /** @type {const} */ ({
   HISTORY:       'qisplus_history',
   UPDATE_CACHE:  'qisplus_update_cache',
   TOTAL_ECTS:    'qisplus_total_ects',
+  THEME:         'qisplus_theme',
 });
+
+// ---------------------------------------------------------------------------
+// Theme modes – 'auto' follows the OS prefers-color-scheme; 'light' / 'dark'
+// force the respective theme regardless of OS settings.
+// ---------------------------------------------------------------------------
+export const THEMES = /** @type {const} */ ({
+  AUTO:  'auto',
+  LIGHT: 'light',
+  DARK:  'dark',
+});
+
+export const DEFAULT_THEME = THEMES.AUTO;
 
 // ---------------------------------------------------------------------------
 // GitHub release source – used by src/update.js to check for new versions.
@@ -77,6 +90,86 @@ export const COLORS = /** @type {const} */ ({
   // Misc
   GREY_TEXT:      '#6b7280',
   WHITE:          '#ffffff',
+});
+
+// ---------------------------------------------------------------------------
+// CSS custom-property references
+//
+// Inline styles in the render layer use these instead of the raw COLORS hex
+// values. The actual colour values live in src/render/theme.js, which injects
+// a single <style> block with both the light defaults and the dark overrides.
+// COLORS above is still used for non-CSS contexts (service-worker badge,
+// fallbacks) where a real hex string is required.
+// ---------------------------------------------------------------------------
+export const CSS_VARS = /** @type {const} */ ({
+  // Brand palette
+  ORANGE:         'var(--qp-orange)',
+  ORANGE_HOVER:   'var(--qp-orange-hover)',
+  TEAL:           'var(--qp-teal)',
+  TEAL_LIGHT:     'var(--qp-teal-light)',
+  GREEN:          'var(--qp-green)',
+  RED:            'var(--qp-red)',
+
+  // Widget chrome
+  WIDGET_BG:      'var(--qp-widget-bg)',
+  WIDGET_BORDER:  'var(--qp-widget-border)',
+  WIDGET_FG:      'var(--qp-fg)',
+  WIDGET_SHADOW:  'var(--qp-shadow)',
+
+  // Surfaces
+  SURFACE:        'var(--qp-surface)',
+  ON_ACCENT:      'var(--qp-on-accent)',
+
+  // Table / rows
+  ROW_BORDER:     'var(--qp-row-border)',
+  GROUP_HDR_BG:   'var(--qp-group-hdr-bg)',
+  HEADER_DIVIDER: 'var(--qp-header-divider)',
+
+  PASSED_ROW_A:   'var(--qp-passed-row-a)',
+  PASSED_ROW_B:   'var(--qp-passed-row-b)',
+  ONGOING_ROW_A:  'var(--qp-ongoing-row-a)',
+  ONGOING_ROW_B:  'var(--qp-ongoing-row-b)',
+  IMPROVE_ROW_A:  'var(--qp-improve-row-a)',
+  IMPROVE_ROW_B:  'var(--qp-improve-row-b)',
+  HIST_ROW_A:     'var(--qp-hist-row-a)',
+  HIST_ROW_B:     'var(--qp-hist-row-b)',
+
+  // Progress bar
+  PROGRESS_TRACK:    'var(--qp-progress-track)',
+  PROGRESS_BG:       'var(--qp-progress-bg)',
+  PROGRESS_LABEL:    'var(--qp-progress-label)',
+  PROGRESS_GRAD_A:   'var(--qp-progress-grad-a)',
+  PROGRESS_GRAD_B:   'var(--qp-progress-grad-b)',
+
+  // Reverse calculator box
+  REVERSE_BG:       'var(--qp-reverse-bg)',
+  REVERSE_BORDER:   'var(--qp-reverse-border)',
+
+  // Improve bar
+  IMPROVE_BAR_BG:     'var(--qp-improve-bar-bg)',
+  IMPROVE_BAR_BORDER: 'var(--qp-improve-bar-border)',
+  IMPROVE_BAR_TEXT:   'var(--qp-improve-bar-text)',
+
+  // Toggle switch
+  TOGGLE_OFF:        'var(--qp-toggle-off)',
+
+  // Inputs
+  INPUT_BG:          'var(--qp-input-bg)',
+  INPUT_FG:          'var(--qp-input-fg)',
+
+  // Grade-bracket colours (replaces gradeColor() hex returns)
+  GRADE_GOOD:        'var(--qp-grade-good)',   // ≤ 1.5
+  GRADE_OK:          'var(--qp-grade-ok)',     // ≤ 2.5
+  GRADE_WARN:        'var(--qp-grade-warn)',   // ≤ 3.5
+  GRADE_BAD:         'var(--qp-grade-bad)',    // > 3.5
+
+  // Improvement badge (✎ Verbesserung)
+  IMPROVING_BADGE_BG: 'var(--qp-improving-badge-bg)',
+  IMPROVING_BADGE_FG: 'var(--qp-improving-badge-fg)',
+
+  // Misc
+  GREY_TEXT:      'var(--qp-grey-text)',
+  WHITE:          'var(--qp-on-accent)',  // legacy alias for badge text colour
 });
 
 // ---------------------------------------------------------------------------

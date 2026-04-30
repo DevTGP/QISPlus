@@ -11,7 +11,7 @@
 // No state, no event listeners – pure DOM construction.
 // ---------------------------------------------------------------------------
 
-import { COLORS, BORDER_RADIUS }        from '../constants.js';
+import { CSS_VARS, BORDER_RADIUS }      from '../constants.js';
 import { el, fmt, gradeColor }           from './core.js';
 import { buildBadge }                    from './progress.js';
 
@@ -32,7 +32,7 @@ function td(text, styles = {}) {
   );
   Object.assign(cell.style, {
     padding:     '6px 10px',
-    borderBottom: `1px solid ${COLORS.ROW_BORDER}`,
+    borderBottom: `1px solid ${CSS_VARS.ROW_BORDER}`,
     verticalAlign: 'middle',
     ...styles,
   });
@@ -52,7 +52,7 @@ function tdEl(styles = {}) {
   );
   Object.assign(cell.style, {
     padding:      '6px 10px',
-    borderBottom: `1px solid ${COLORS.ROW_BORDER}`,
+    borderBottom: `1px solid ${CSS_VARS.ROW_BORDER}`,
     verticalAlign: 'middle',
     ...styles,
   });
@@ -83,9 +83,9 @@ export function buildGroupHeader(semLabel, semStats, isCurrentSem) {
   );
   cell.colSpan = 4;
   Object.assign(cell.style, {
-    backgroundColor: COLORS.GROUP_HDR_BG,
+    backgroundColor: CSS_VARS.GROUP_HDR_BG,
     padding:         '5px 10px',
-    borderBottom:    `1px solid ${COLORS.ROW_BORDER}`,
+    borderBottom:    `1px solid ${CSS_VARS.ROW_BORDER}`,
   });
 
   // Flex layout: label left, stats right
@@ -98,7 +98,7 @@ export function buildGroupHeader(semLabel, semStats, isCurrentSem) {
   // --- Left: semester label -------------------------------------------
   const labelEl = el('span', {
     fontWeight: '700',
-    color:      COLORS.TEAL,
+    color:      CSS_VARS.TEAL,
     fontSize:   '0.88em',
   });
   labelEl.textContent = semLabel;
@@ -116,7 +116,7 @@ export function buildGroupHeader(semLabel, semStats, isCurrentSem) {
   } else {
     const running = el('span', {
       fontStyle: 'italic',
-      color:     COLORS.GREY_TEXT,
+      color:     CSS_VARS.GREY_TEXT,
       fontSize:  '0.82em',
     });
     running.textContent = 'läuft';
@@ -125,7 +125,7 @@ export function buildGroupHeader(semLabel, semStats, isCurrentSem) {
 
   if (isCurrentSem) {
     right.append(
-      buildBadge('aktuell', COLORS.TEAL, { fontSize: '0.72em', padding: '1px 6px' })
+      buildBadge('aktuell', CSS_VARS.TEAL, { fontSize: '0.72em', padding: '1px 6px' })
     );
   }
 
@@ -160,7 +160,7 @@ function renderPassedGradeCell(cell, m, withImprovement, onWhatIfChange) {
   if (m._isWhatIf) {
     // Original (strikethrough)
     const orig = el('span', {
-      color:          COLORS.GREY_TEXT,
+      color:          CSS_VARS.GREY_TEXT,
       textDecoration: 'line-through',
       fontSize:       '0.85em',
     });
@@ -168,7 +168,7 @@ function renderPassedGradeCell(cell, m, withImprovement, onWhatIfChange) {
     cell.append(orig);
 
     const arrow = el('span', {
-      color:    COLORS.GREY_TEXT,
+      color:    CSS_VARS.GREY_TEXT,
       fontSize: '0.82em',
       margin:   '0 4px',
     });
@@ -186,7 +186,7 @@ function renderPassedGradeCell(cell, m, withImprovement, onWhatIfChange) {
     if (onWhatIfChange) {
       const x = el('span', {
         marginLeft: '6px',
-        color:      COLORS.GREY_TEXT,
+        color:      CSS_VARS.GREY_TEXT,
         cursor:     'pointer',
         fontSize:   '0.95em',
         fontWeight: '700',
@@ -211,7 +211,7 @@ function renderPassedGradeCell(cell, m, withImprovement, onWhatIfChange) {
     // Improvement simulation hint
     if (withImprovement && m.improvable) {
       const hint = el('span', {
-        color:      COLORS.GREEN,
+        color:      CSS_VARS.GREEN,
         fontSize:   '0.8em',
         marginLeft: '4px',
       });
@@ -257,13 +257,14 @@ function openWhatIfEditor(cell, m, onWhatIfChange) {
   Object.assign(inp.style, {
     width:        '60px',
     padding:      '2px 4px',
-    border:       `1px solid ${COLORS.TEAL}`,
+    border:       `1px solid ${CSS_VARS.TEAL}`,
     borderRadius: '4px',
     fontSize:     '0.9em',
     fontFamily:   'inherit',
+    color:        CSS_VARS.INPUT_FG,
     textAlign:    'center',
     outline:      'none',
-    background:   '#fff',
+    background:   CSS_VARS.INPUT_BG,
   });
 
   const parseVal = () => {
@@ -321,9 +322,9 @@ function openWhatIfEditor(cell, m, onWhatIfChange) {
  * Row background colours indexed by type and alternating index.
  */
 const ROW_BG = {
-  passed:    [COLORS.PASSED_ROW_A,  COLORS.PASSED_ROW_B],
-  ongoing:   [COLORS.ONGOING_ROW_A, COLORS.ONGOING_ROW_B],
-  improving: [COLORS.IMPROVE_ROW_A, COLORS.IMPROVE_ROW_B],
+  passed:    [CSS_VARS.PASSED_ROW_A,  CSS_VARS.PASSED_ROW_B],
+  ongoing:   [CSS_VARS.ONGOING_ROW_A, CSS_VARS.ONGOING_ROW_B],
+  improving: [CSS_VARS.IMPROVE_ROW_A, CSS_VARS.IMPROVE_ROW_B],
 };
 
 /**
@@ -361,7 +362,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
 
   const nameSpan = el('span', {
     fontStyle: rowType === 'ongoing' ? 'italic' : 'normal',
-    color:     rowType === 'ongoing' ? COLORS.GREY_TEXT : 'inherit',
+    color:     rowType === 'ongoing' ? CSS_VARS.GREY_TEXT : CSS_VARS.WIDGET_FG,
   });
   nameSpan.textContent = m.name;
   nameCell.append(nameSpan);
@@ -370,7 +371,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
   if (rowType === 'ongoing') {
     nameCell.append('\u00a0'); // nbsp
     nameCell.append(
-      buildBadge('angemeldet', COLORS.TEAL, { fontSize: '0.72em' })
+      buildBadge('angemeldet', CSS_VARS.TEAL, { fontSize: '0.72em' })
     );
   }
 
@@ -379,8 +380,8 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
     nameCell.append(
       buildBadge(
         `✎&thinsp;Verbesserung&thinsp;${m.improvementSem}`,
-        '#b8860b',
-        { fontSize: '0.72em', backgroundColor: '#c9a227' }
+        CSS_VARS.IMPROVING_BADGE_BG,
+        { fontSize: '0.72em', color: CSS_VARS.IMPROVING_BADGE_FG }
       )
     );
   }
@@ -405,7 +406,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
       gradeCell.append(cur);
 
       const arrow = el('span', {
-        color:     COLORS.GREY_TEXT,
+        color:     CSS_VARS.GREY_TEXT,
         fontSize:  '0.82em',
         margin:    '0 3px',
       });
@@ -418,14 +419,14 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
       if (withImprovement && m.improvable) {
         const sim = el('span', {
           fontWeight: '600',
-          color:      COLORS.GREEN,
+          color:      CSS_VARS.GREEN,
           fontSize:   '0.9em',
         });
         sim.textContent = ' 1.00';
         gradeCell.append(sim);
       } else {
         const placeholder = el('span', {
-          color:    COLORS.GREY_TEXT,
+          color:    CSS_VARS.GREY_TEXT,
           fontSize: '0.82em',
         });
         placeholder.textContent = ' ?';
@@ -442,7 +443,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
   // ------------------------------------------------------------------
   const ectsCell = td(
     rowType === 'passed' ? String(m.ects) : '–',
-    { textAlign: 'center', color: COLORS.GREY_TEXT }
+    { textAlign: 'center', color: CSS_VARS.GREY_TEXT }
   );
 
   // ------------------------------------------------------------------
@@ -461,7 +462,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
     m.passedSem;
 
   const semCell = tdEl({ textAlign: 'center' });
-  const semSpan = el('span', { fontSize: '0.82em', color: COLORS.GREY_TEXT });
+  const semSpan = el('span', { fontSize: '0.82em', color: CSS_VARS.GREY_TEXT });
   semSpan.textContent = displaySem ?? '–';
   semCell.append(semSpan);
 
@@ -481,7 +482,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, o
  * @returns {HTMLTableRowElement}
  */
 export function buildHistoricalRow(h, rowIndex) {
-  const bg  = rowIndex % 2 === 0 ? COLORS.HIST_ROW_A : COLORS.HIST_ROW_B;
+  const bg  = rowIndex % 2 === 0 ? CSS_VARS.HIST_ROW_A : CSS_VARS.HIST_ROW_B;
   const row = document.createElement('tr');
   row.style.backgroundColor = bg;
 
@@ -489,7 +490,7 @@ export function buildHistoricalRow(h, rowIndex) {
   const nameCell = tdEl({ textAlign: 'left' });
   const nameSpan = el('span', {
     fontStyle: 'italic',
-    color:     COLORS.GREY_TEXT,
+    color:     CSS_VARS.GREY_TEXT,
     fontSize:  '0.9em',
   });
   nameSpan.textContent = h.moduleName;
@@ -497,8 +498,8 @@ export function buildHistoricalRow(h, rowIndex) {
 
   // Reason badge
   const badgeColor = (h.status === 'NB' || h.status === 'EN')
-    ? COLORS.RED
-    : COLORS.ORANGE;
+    ? CSS_VARS.RED
+    : CSS_VARS.ORANGE;
   nameCell.append(
     buildBadge(h.reasonLabel, badgeColor, { fontSize: '0.70em' })
   );
@@ -520,13 +521,13 @@ export function buildHistoricalRow(h, rowIndex) {
   // ECTS (always 0 for historical rows)
   const ectsCell = td('0', {
     textAlign: 'center',
-    color:     COLORS.GREY_TEXT,
+    color:     CSS_VARS.GREY_TEXT,
     fontSize:  '0.85em',
   });
 
   // Semester
   const semCell = tdEl({ textAlign: 'center' });
-  const semSpan = el('span', { fontSize: '0.82em', color: COLORS.GREY_TEXT });
+  const semSpan = el('span', { fontSize: '0.82em', color: CSS_VARS.GREY_TEXT });
   semSpan.textContent = h.semester;
   semCell.append(semSpan);
 

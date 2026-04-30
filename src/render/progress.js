@@ -4,8 +4,8 @@
 // QISPlus – progress bar + badge builders
 // ---------------------------------------------------------------------------
 
-import { COLORS, DEFAULT_TOTAL_ECTS, BORDER_RADIUS } from '../constants.js';
-import { el, fmt, gradeColor }               from './core.js';
+import { CSS_VARS, DEFAULT_TOTAL_ECTS, BORDER_RADIUS } from '../constants.js';
+import { el, fmt, gradeColor }                  from './core.js';
 
 // ---------------------------------------------------------------------------
 // buildBadge
@@ -23,7 +23,7 @@ export function buildBadge(html, bgColor, extraStyles = {}) {
   return /** @type {HTMLSpanElement} */ (el('span', {
     display:       'inline-block',
     backgroundColor: bgColor,
-    color:         COLORS.WHITE,
+    color:         CSS_VARS.ON_ACCENT,
     fontSize:      '0.78em',
     fontWeight:    '600',
     padding:       '2px 8px',
@@ -63,13 +63,13 @@ export function buildProgressBar(earnedEcts, remaining, totalEcts = DEFAULT_TOTA
     alignItems:     'baseline',
     marginBottom:   '4px',
     fontSize:       '0.85em',
-    color:          '#444',
+    color:          CSS_VARS.PROGRESS_LABEL,
   });
 
   const leftLabel = el('span', { fontWeight: '600' });
   leftLabel.textContent = `${earnedEcts} / ${totalEcts} ECTS erreicht`;
 
-  const rightLabel = el('span', { color: COLORS.GREY_TEXT });
+  const rightLabel = el('span', { color: CSS_VARS.GREY_TEXT });
   rightLabel.textContent = `${remaining} verbleibend · ${pctStr}%`;
 
   labels.append(leftLabel, rightLabel);
@@ -79,14 +79,14 @@ export function buildProgressBar(earnedEcts, remaining, totalEcts = DEFAULT_TOTA
     width:        '100%',
     height:       '10px',
     borderRadius: '5px',
-    background:   '#e0e7ef',
+    background:   CSS_VARS.PROGRESS_TRACK,
     overflow:     'hidden',
   });
 
   const fill = el('div', {
     height:     '100%',
     width:      `${pct}%`,
-    background: `linear-gradient(90deg, ${COLORS.ORANGE}, #e07040)`,
+    background: `linear-gradient(90deg, ${CSS_VARS.PROGRESS_GRAD_A}, ${CSS_VARS.PROGRESS_GRAD_B})`,
     borderRadius: '5px',
     transition:   'width 0.4s ease',
   });
@@ -97,7 +97,7 @@ export function buildProgressBar(earnedEcts, remaining, totalEcts = DEFAULT_TOTA
   const wrapper = el('div', {
     marginBottom: '10px',
     padding:      '8px 10px',
-    background:   '#eaf1f8',
+    background:   CSS_VARS.PROGRESS_BG,
     borderRadius: BORDER_RADIUS,
   });
 
@@ -134,16 +134,16 @@ export function buildStatBadges(avg, ects, bestAchievable = null) {
   if (avg !== null) {
     wrapper.append(buildBadge(`Ø&thinsp;${fmt(avg)}`, gradeColor(avg)));
   } else {
-    wrapper.append(buildBadge('Ø&thinsp;–', COLORS.GREY_TEXT));
+    wrapper.append(buildBadge('Ø&thinsp;–', CSS_VARS.GREY_TEXT));
   }
 
-  wrapper.append(buildBadge(`${ects}&thinsp;ECTS`, COLORS.TEAL));
+  wrapper.append(buildBadge(`${ects}&thinsp;ECTS`, CSS_VARS.TEAL));
 
   if (bestAchievable !== null && Number.isFinite(bestAchievable)) {
     const bestBadge = buildBadge(
       `Bestm.&thinsp;Ø&thinsp;${fmt(bestAchievable)}`,
       gradeColor(bestAchievable),
-      { border: `1px dashed ${COLORS.WHITE}` }
+      { border: `1px dashed ${CSS_VARS.ON_ACCENT}` }
     );
     bestBadge.title = 'Bestmöglicher Notenschnitt – verbleibende Module mit 1,0 angenommen';
     wrapper.append(bestBadge);

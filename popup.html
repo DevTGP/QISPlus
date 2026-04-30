@@ -5,6 +5,114 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>QISPlus</title>
     <style>
+        /* ---------- Theme palette (light defaults) ---------- */
+        :root {
+            --qp-bg:           #f7fbff;
+            --qp-fg:           #222222;
+            --qp-muted:        #666666;
+            --qp-faint:        #aaaaaa;
+            --qp-divider:      #dde4ef;
+
+            --qp-accent:       #ca5116;
+            --qp-accent-hover: #a33e0f;
+            --qp-accent-soft:  rgba(202, 81, 22, 0.18);
+            --qp-on-accent:    #ffffff;
+            --qp-teal:         #115E67;
+
+            --qp-surface:      #ffffff;
+            --qp-surface-fg:   #222222;
+            --qp-input-border: #ccd3df;
+            --qp-input-border-soft: #e3e8f0;
+            --qp-input-border-hover: #b6c0d2;
+            --qp-input-disabled: #c8cdd6;
+
+            --qp-toggle-off:   #cccccc;
+            --qp-status-off:   #999999;
+
+            --qp-update-bg:    #fff8e1;
+            --qp-update-border:#ffd54f;
+            --qp-update-title: #b8860b;
+            --qp-update-body:  #5b3e00;
+
+            --qp-segment-bg:    #ffffff;
+            --qp-segment-border:#ccd3df;
+            --qp-segment-active-bg: #ca5116;
+            --qp-segment-active-fg: #ffffff;
+        }
+
+        /* ---------- Auto: dark when OS prefers dark and user hasn't forced light ---------- */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-qp-theme="light"]):not([data-qp-theme="dark"]),
+            :root[data-qp-theme="auto"] {
+                --qp-bg:           #11161f;
+                --qp-fg:           #e6e9ef;
+                --qp-muted:        #9ca3af;
+                --qp-faint:        #6b7280;
+                --qp-divider:      #2a3344;
+
+                --qp-accent:       #ff7f4d;
+                --qp-accent-hover: #e05d24;
+                --qp-accent-soft:  rgba(255, 127, 77, 0.22);
+                --qp-on-accent:    #0d1117;
+                --qp-teal:         #5dc8d4;
+
+                --qp-surface:      #1f2937;
+                --qp-surface-fg:   #e6e9ef;
+                --qp-input-border: #3a4252;
+                --qp-input-border-soft: #2a3344;
+                --qp-input-border-hover: #50596d;
+                --qp-input-disabled: #3a4252;
+
+                --qp-toggle-off:   #3a4252;
+                --qp-status-off:   #6b7280;
+
+                --qp-update-bg:    #2a2415;
+                --qp-update-border:#7a5800;
+                --qp-update-title: #ffd97a;
+                --qp-update-body:  #f0d895;
+
+                --qp-segment-bg:    #1f2937;
+                --qp-segment-border:#3a4252;
+                --qp-segment-active-bg: #ff7f4d;
+                --qp-segment-active-fg: #0d1117;
+            }
+        }
+
+        /* ---------- Manual override ---------- */
+        :root[data-qp-theme="dark"] {
+            --qp-bg:           #11161f;
+            --qp-fg:           #e6e9ef;
+            --qp-muted:        #9ca3af;
+            --qp-faint:        #6b7280;
+            --qp-divider:      #2a3344;
+
+            --qp-accent:       #ff7f4d;
+            --qp-accent-hover: #e05d24;
+            --qp-accent-soft:  rgba(255, 127, 77, 0.22);
+            --qp-on-accent:    #0d1117;
+            --qp-teal:         #5dc8d4;
+
+            --qp-surface:      #1f2937;
+            --qp-surface-fg:   #e6e9ef;
+            --qp-input-border: #3a4252;
+            --qp-input-border-soft: #2a3344;
+            --qp-input-border-hover: #50596d;
+            --qp-input-disabled: #3a4252;
+
+            --qp-toggle-off:   #3a4252;
+            --qp-status-off:   #6b7280;
+
+            --qp-update-bg:    #2a2415;
+            --qp-update-border:#7a5800;
+            --qp-update-title: #ffd97a;
+            --qp-update-body:  #f0d895;
+
+            --qp-segment-bg:    #1f2937;
+            --qp-segment-border:#3a4252;
+            --qp-segment-active-bg: #ff7f4d;
+            --qp-segment-active-fg: #0d1117;
+        }
+
         *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
@@ -15,8 +123,8 @@
             width: 230px;
             font-family: sans-serif;
             font-size: 13px;
-            background: #f7fbff;
-            color: #222;
+            background: var(--qp-bg);
+            color: var(--qp-fg);
             padding: 12px 14px;
             user-select: none;
         }
@@ -24,7 +132,7 @@
         .qp-header {
             font-weight: 700;
             font-size: 0.95em;
-            color: #115E67;
+            color: var(--qp-teal);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -61,7 +169,7 @@
             position: absolute;
             cursor: pointer;
             inset: 0;
-            background: #ccc;
+            background: var(--qp-toggle-off);
             border-radius: 21px;
             transition: background 0.2s;
         }
@@ -73,13 +181,13 @@
             width: 15px;
             left: 3px;
             bottom: 3px;
-            background: #fff;
+            background: var(--qp-surface);
             border-radius: 50%;
             transition: transform 0.2s;
         }
 
         input:checked + .slider {
-            background: #ca5116;
+            background: var(--qp-accent);
         }
 
         input:checked + .slider::before {
@@ -94,23 +202,23 @@
         }
 
         .qp-status.active {
-            color: #ca5116;
+            color: var(--qp-accent);
             font-weight: 600;
         }
 
         .qp-status.inactive {
-            color: #999;
+            color: var(--qp-status-off);
         }
 
         hr {
             border: none;
-            border-top: 1px solid #dde4ef;
+            border-top: 1px solid var(--qp-divider);
             margin: 8px 0;
         }
 
         .qp-version {
             font-size: 0.72em;
-            color: #aaa;
+            color: var(--qp-faint);
             text-align: right;
         }
 
@@ -118,8 +226,8 @@
         .qp-ects-stepper {
             display: inline-flex;
             align-items: stretch;
-            background: #fff;
-            border: 1px solid #ccd3df;
+            background: var(--qp-surface);
+            border: 1px solid var(--qp-input-border);
             border-radius: 999px;
             overflow: hidden;
             transition: border-color 0.15s, box-shadow 0.15s;
@@ -127,19 +235,19 @@
         }
 
         .qp-ects-stepper:hover {
-            border-color: #b6c0d2;
+            border-color: var(--qp-input-border-hover);
         }
 
         .qp-ects-stepper:focus-within {
-            border-color: #ca5116;
-            box-shadow: 0 0 0 2px rgba(202, 81, 22, 0.18);
+            border-color: var(--qp-accent);
+            box-shadow: 0 0 0 2px var(--qp-accent-soft);
         }
 
         .qp-ects-btn {
             width: 22px;
             border: none;
             background: transparent;
-            color: #115E67;
+            color: var(--qp-teal);
             font-size: 15px;
             font-weight: 700;
             line-height: 1;
@@ -151,16 +259,16 @@
         }
 
         .qp-ects-btn:hover {
-            background: #ca5116;
-            color: #fff;
+            background: var(--qp-accent);
+            color: var(--qp-on-accent);
         }
 
         .qp-ects-btn:active {
-            background: #a33e0f;
+            background: var(--qp-accent-hover);
         }
 
         .qp-ects-btn:disabled {
-            color: #c8cdd6;
+            color: var(--qp-input-disabled);
             background: transparent;
             cursor: not-allowed;
         }
@@ -169,14 +277,14 @@
             width: 42px;
             padding: 0;
             border: none;
-            border-left: 1px solid #e3e8f0;
-            border-right: 1px solid #e3e8f0;
+            border-left: 1px solid var(--qp-input-border-soft);
+            border-right: 1px solid var(--qp-input-border-soft);
             font-size: 0.88em;
             font-family: inherit;
             font-variant-numeric: tabular-nums;
             font-weight: 600;
-            color: #222;
-            background: #fff;
+            color: var(--qp-surface-fg);
+            background: var(--qp-surface);
             text-align: center;
             outline: none;
         }
@@ -192,11 +300,44 @@
             -moz-appearance: textfield;
         }
 
+        /* ---------- Theme picker (segmented control) ---------- */
+        .qp-theme-seg {
+            display: inline-flex;
+            background: var(--qp-segment-bg);
+            border: 1px solid var(--qp-segment-border);
+            border-radius: 999px;
+            overflow: hidden;
+            font-size: 0.78em;
+        }
+
+        .qp-theme-seg button {
+            border: none;
+            background: transparent;
+            color: var(--qp-fg);
+            padding: 3px 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: 500;
+            line-height: 1.4;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .qp-theme-seg button:hover:not(.is-active) {
+            background: var(--qp-accent-soft);
+        }
+
+        .qp-theme-seg button.is-active {
+            background: var(--qp-segment-active-bg);
+            color: var(--qp-segment-active-fg);
+            font-weight: 600;
+        }
+
         /* ---------- Update banner ---------- */
         .qp-update {
             display: none;            /* shown by popup.js when an update exists */
-            background: #fff8e1;
-            border: 1px solid #ffd54f;
+            background: var(--qp-update-bg);
+            border: 1px solid var(--qp-update-border);
             border-radius: 5px;
             padding: 8px 10px;
             margin-bottom: 10px;
@@ -206,7 +347,7 @@
 
         .qp-update-title {
             font-weight: 700;
-            color: #b8860b;
+            color: var(--qp-update-title);
             margin-bottom: 3px;
             display: flex;
             align-items: center;
@@ -214,17 +355,17 @@
         }
 
         .qp-update-body {
-            color: #5b3e00;
+            color: var(--qp-update-body);
             margin-bottom: 7px;
         }
 
-        .qp-update-body b { color: #ca5116; }
+        .qp-update-body b { color: var(--qp-accent); }
 
         .qp-update-btn {
             display: inline-block;
             padding: 4px 9px;
-            background: #ca5116;
-            color: #fff;
+            background: var(--qp-accent);
+            color: var(--qp-on-accent);
             text-decoration: none;
             border-radius: 3px;
             font-weight: 600;
@@ -233,7 +374,7 @@
         }
 
         .qp-update-btn:hover {
-            background: #a33e0f;
+            background: var(--qp-accent-hover);
         }
     </style>
 </head>
@@ -258,6 +399,15 @@
         <button aria-label="ECTS verringern" class="qp-ects-btn" id="qp-ects-minus" tabindex="-1" type="button">−</button>
         <input class="qp-ects-input" id="qp-total-ects" inputmode="numeric" max="999" min="1" step="1" type="number" value="180"/>
         <button aria-label="ECTS erhöhen" class="qp-ects-btn" id="qp-ects-plus" tabindex="-1" type="button">+</button>
+    </div>
+</div>
+
+<div class="qp-row">
+    <span class="qp-label">Design</span>
+    <div aria-label="Theme auswählen" class="qp-theme-seg" id="qp-theme-seg" role="group">
+        <button data-theme="auto"  type="button" title="Folgt der Systemeinstellung">Auto</button>
+        <button data-theme="light" type="button" title="Immer hell">Hell</button>
+        <button data-theme="dark"  type="button" title="Immer dunkel">Dunkel</button>
     </div>
 </div>
 

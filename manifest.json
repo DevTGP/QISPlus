@@ -1,7 +1,7 @@
 {
   "name": "QISPlus",
   "description": "Grade dashboard for Hochschule Trier QIS",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "manifest_version": 3,
   "host_permissions": [
     "https://qis.hochschule-trier.de/qisserver/*",
@@ -55,6 +55,7 @@
         "src/render/progress.js",
         "src/render/table.js",
         "src/render/rows.js",
+        "src/render/theme.js",
         "src/render/index.js"
       ],
       "matches": [

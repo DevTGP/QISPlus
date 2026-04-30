@@ -29,10 +29,15 @@
     // ------------------------------------------------------------------
     const base = chrome.runtime.getURL('src/');
 
-    const [{parseGrades}, {buildWidget}] = await Promise.all([
+    const [{parseGrades}, {buildWidget}, {injectThemeStyles}] = await Promise.all([
         import(base + 'parser.js'),
         import(base + 'widget.js'),
+        import(base + 'render/theme.js'),
     ]);
+
+    // Inject the theme stylesheet ASAP so the widget renders with the
+    // correct palette on first paint (no flash of unthemed widget).
+    injectThemeStyles();
 
     // ------------------------------------------------------------------
     // Boot

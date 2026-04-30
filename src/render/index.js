@@ -14,3 +14,4 @@ export { el, fmt, gradeColor }                          from './core.js';
 export { buildBadge, buildProgressBar, buildStatBadges } from './progress.js';
 export { buildTable }                                    from './table.js';
 export { buildGroupHeader, buildModuleRow, buildHistoricalRow } from './rows.js';
+export { injectThemeStyles, applyTheme, THEME_STYLE_ID }  from './theme.js';

@@ -7,7 +7,7 @@
 // No state, no event wiring, no imports from stats or parser.
 // ---------------------------------------------------------------------------
 
-import { COLORS } from '../constants.js';
+import { CSS_VARS } from '../constants.js';
 
 // ---------------------------------------------------------------------------
 // el() – element factory
@@ -64,19 +64,21 @@ export function fmt(n) {
 // ---------------------------------------------------------------------------
 
 /**
- * Return the brand colour that semantically represents the given grade.
+ * Return a CSS custom-property reference that semantically represents the
+ * given grade. Returning a `var(--qp-grade-…)` string means the colour
+ * automatically tracks the active theme without re-render.
  *
- *   ≤ 1.5 → green   (#298836)
- *   ≤ 2.5 → teal    (#115E67)
- *   ≤ 3.5 → orange  (#ca5116)
- *   > 3.5 → red     (#A50034)
+ *   ≤ 1.5 → --qp-grade-good
+ *   ≤ 2.5 → --qp-grade-ok
+ *   ≤ 3.5 → --qp-grade-warn
+ *   > 3.5 → --qp-grade-bad
  *
  * @param {number} g
- * @returns {string}  CSS hex colour
+ * @returns {string}  CSS `var(--qp-grade-…)` reference
  */
 export function gradeColor(g) {
-  if (g <= 1.5) return COLORS.GREEN;
-  if (g <= 2.5) return COLORS.TEAL;
-  if (g <= 3.5) return COLORS.ORANGE;
-  return COLORS.RED;
+  if (g <= 1.5) return CSS_VARS.GRADE_GOOD;
+  if (g <= 2.5) return CSS_VARS.GRADE_OK;
+  if (g <= 3.5) return CSS_VARS.GRADE_WARN;
+  return CSS_VARS.GRADE_BAD;
 }

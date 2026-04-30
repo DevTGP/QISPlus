@@ -13,7 +13,7 @@
 // use the same sanitization logic.
 // ---------------------------------------------------------------------------
 
-import { DEFAULT_TOTAL_ECTS, STORAGE_KEYS } from './constants.js';
+import { DEFAULT_TOTAL_ECTS, DEFAULT_THEME, STORAGE_KEYS, THEMES } from './constants.js';
 
 const _store = () =>
   typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
@@ -94,6 +94,35 @@ export async function getTotalEcts() {
 export function setTotalEcts(value) {
   const safe = Math.max(1, Math.min(999, Math.round(Number(value) || DEFAULT_TOTAL_ECTS)));
   return storageSet({ [STORAGE_KEYS.TOTAL_ECTS]: safe });
+}
+
+// ---------------------------------------------------------------------------
+// Theme helpers
+// ---------------------------------------------------------------------------
+
+const VALID_THEMES = new Set([THEMES.AUTO, THEMES.LIGHT, THEMES.DARK]);
+
+/**
+ * Read the user-configured theme mode from storage.
+ * Falls back to DEFAULT_THEME ('auto') when the key is absent or invalid.
+ *
+ * @returns {Promise<('auto'|'light'|'dark')>}
+ */
+export async function getTheme() {
+  const result = await storageGet(STORAGE_KEYS.THEME);
+  const raw    = result[STORAGE_KEYS.THEME];
+  return VALID_THEMES.has(raw) ? raw : DEFAULT_THEME;
+}
+
+/**
+ * Persist the user-configured theme mode. Invalid values fall back to 'auto'.
+ *
+ * @param {string} value
+ * @returns {Promise<void>}
+ */
+export function setTheme(value) {
+  const safe = VALID_THEMES.has(value) ? value : DEFAULT_THEME;
+  return storageSet({ [STORAGE_KEYS.THEME]: safe });
 }
 
 /**

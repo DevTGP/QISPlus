@@ -9,8 +9,8 @@
 // whole table structure.
 // ---------------------------------------------------------------------------
 
-import { COLORS, COLUMNS, BORDER_RADIUS } from '../constants.js';
-import { el }                              from './core.js';
+import { CSS_VARS, COLUMNS, BORDER_RADIUS } from '../constants.js';
+import { el }                                from './core.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -85,15 +85,15 @@ export function buildTable(sortCol, sortDir, onHeaderClick) {
       padding:         '7px 10px',
       textAlign:       col.align,
       width:           col.width,
-      backgroundColor: isActive ? COLORS.ORANGE_HOVER : COLORS.ORANGE,
-      color:           COLORS.WHITE,
+      backgroundColor: isActive ? CSS_VARS.ORANGE_HOVER : CSS_VARS.ORANGE,
+      color:           CSS_VARS.ON_ACCENT,
       fontWeight:      '600',
       fontSize:        '0.82em',
       letterSpacing:   '0.03em',
       cursor:          'pointer',
       userSelect:      'none',
       whiteSpace:      'nowrap',
-      borderRight:     `1px solid rgba(255,255,255,0.15)`,
+      borderRight:     `1px solid ${CSS_VARS.HEADER_DIVIDER}`,
       transition:      'background-color 0.15s',
     });
 
@@ -106,10 +106,10 @@ export function buildTable(sortCol, sortDir, onHeaderClick) {
 
     // Hover effect
     th.addEventListener('mouseenter', () => {
-      th.style.backgroundColor = COLORS.ORANGE_HOVER;
+      th.style.backgroundColor = CSS_VARS.ORANGE_HOVER;
     });
     th.addEventListener('mouseleave', () => {
-      th.style.backgroundColor = isActive ? COLORS.ORANGE_HOVER : COLORS.ORANGE;
+      th.style.backgroundColor = isActive ? CSS_VARS.ORANGE_HOVER : CSS_VARS.ORANGE;
     });
 
     // Click → delegate to caller
