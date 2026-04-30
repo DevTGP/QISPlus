@@ -9,16 +9,18 @@ Eine Chrome-Erweiterung für das **QIS-Portal der Hochschule Trier**, die den No
 Sobald du im QIS deinen Notenspiegel öffnest, erscheint oberhalb der Tabelle ein zusätzliches Widget mit:
 
 - **Aktueller Notendurchschnitt** (gewichtet nach ECTS)
-- **ECTS-Fortschritt** mit Balken — *X / 180 erreicht*
+- **ECTS-Fortschritt** mit Balken — *X / Gesamt-ECTS erreicht* (Gesamtwert frei konfigurierbar im Popup)
 - **Bestmöglicher Notenschnitt** unter der Annahme, dass alle verbleibenden Module mit 1,0 abgeschlossen werden
-- **Notenverbesserungs-Simulation** auf Knopfdruck: zeigt, wie sich dein Schnitt entwickelt, wenn aktiv angemeldete Verbesserungen sowie alle Module aus dem letzten abgeschlossenen Semester eine 1,0 ergäben
+- **Ziel-Schnitt-Rechner** 🎯 — gib deinen Wunsch-Schnitt ein und QISPlus berechnet, welcher Durchschnitt auf den verbleibenden ECTS dafür nötig ist
+- **Notenverbesserungs-Simulation** auf Knopfdruck: zeigt, wie sich dein Schnitt entwickelt, wenn aktiv angemeldete Verbesserungen sowie alle Module aus dem letzten abgeschlossenen Semester eine 1,0 (oder eine selbst gewählte Note) ergäben
+- **Pro-Modul „Was-wäre-wenn"**: Klick auf eine bereits erbrachte Note öffnet ein Eingabefeld, in dem sich eine hypothetische Note setzen lässt — Schnitt, Bestm. Ø und Ziel-Rechner aktualisieren sich live
 - **Sortier- und gruppierbare Modultabelle** (nach Modul, Note, ECTS oder Semester)
 - **Semester-Schnitt** als Pille direkt am jeweiligen Semester-Header
 - **Aktive Verbesserungen und laufende Module** klar gekennzeichnet
 - **Frühere Versuche** (Rücktritt, nicht bestanden, Freiversuch, Atteste, …) optional einblendbar
 - **Farbcodierte Noten** für schnellen Überblick (grün = sehr gut, rot = problematisch)
 
-Über das Symbol in der Browser-Leiste lässt sich das Widget jederzeit komplett ein- oder ausblenden.
+Über das Symbol in der Browser-Leiste lässt sich das Widget jederzeit komplett ein- oder ausblenden, dort wird auch die Gesamt-ECTS-Zielsumme eingestellt.
 
 ---
 
@@ -38,7 +40,7 @@ Sobald du im QIS auf eine Notenspiegel-Seite navigierst, baut sich das Widget au
 
 ## Updates
 
-QISPlus prüft alle paar Stunden im Hintergrund, ob auf GitHub eine neuere Version veröffentlicht wurde. Liegt ein Update vor, erscheint im Popup ein Hinweis mit Download-Link. Aktualisiert wird durch das gleiche Verfahren wie die Erstinstallation: neuen Ordner laden bzw. den bestehenden in `chrome://extensions` über den Refresh-Button ersetzen.
+QISPlus prüft regelmäßig im Hintergrund (über einen Service-Worker mit `chrome.alarms`), ob auf GitHub eine neuere Version veröffentlicht wurde. Liegt ein Update vor, erscheint im Popup ein Hinweis mit Download-Link. Aktualisiert wird durch das gleiche Verfahren wie die Erstinstallation: neuen Ordner laden bzw. den bestehenden in `chrome://extensions` über den Refresh-Button ersetzen.
 
 ---
 
@@ -46,18 +48,11 @@ QISPlus prüft alle paar Stunden im Hintergrund, ob auf GitHub eine neuere Versi
 
 Sämtliche Berechnungen passieren ausschließlich **lokal in deinem Browser**. QISPlus liest die Notenspiegel-Seite, die du ohnehin gerade ansiehst — es werden keine Noten, ECTS oder sonstigen Daten an externe Server gesendet. Die einzige ausgehende Verbindung ist eine periodische, anonyme Anfrage an die GitHub-API zur Versionsprüfung.
 
-Es werden keine persönlichen Daten gespeichert. Lokal in den Erweiterungseinstellungen liegen lediglich deine Schalterzustände (Widget aktiv ja/nein, Verbesserungs-Simulation, frühere Versuche eingeblendet) und der zwischengespeicherte Versions-Check.
+Es werden keine persönlichen Daten gespeichert. Lokal in den Erweiterungseinstellungen liegen lediglich deine Schalterzustände (Widget aktiv ja/nein, Verbesserungs-Simulation, frühere Versuche eingeblendet), die eingestellte Gesamt-ECTS-Zahl sowie der zwischengespeicherte Versions-Check.
 
 ---
 
 ## Hinweise
 
 - Funktioniert ausschließlich auf `qis.hochschule-trier.de`.
-- Die ECTS-Zielsumme ist auf **180** voreingestellt (Standard-Bachelor). Wer in einem abweichenden Studiengang ist, kann den Wert in der Datei `src/constants.js` anpassen.
-- Das Layout des QIS-Portals wird gelegentlich verändert; sollte das Widget einmal nicht erscheinen oder fehlerhafte Werte anzeigen, bitte ein [Issue auf GitHub](https://github.com/DevTGP/QISPlus/issues) eröffnen.
-
----
-
-## Mitwirken
-
-Pull Requests, Bug-Reports und Verbesserungsvorschläge sind willkommen — siehe [GitHub-Repo](https://github.com/DevTGP/QISPlus).
+- Die ECTS-Zielsumme ist auf **180** voreingestellt (Standard-Bachelor) und lässt sich direkt im Popup auf einen abweichenden Studiengang anpassen.
