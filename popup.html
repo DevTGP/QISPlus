@@ -114,26 +114,74 @@
             text-align: right;
         }
 
-        /* ---------- ECTS input ---------- */
-        .qp-ects-input {
-            width: 60px;
-            padding: 2px 6px;
+        /* ---------- ECTS stepper ---------- */
+        .qp-ects-stepper {
+            display: inline-flex;
+            align-items: stretch;
+            background: #fff;
             border: 1px solid #ccd3df;
-            border-radius: 4px;
+            border-radius: 999px;
+            overflow: hidden;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            height: 24px;
+        }
+
+        .qp-ects-stepper:hover {
+            border-color: #b6c0d2;
+        }
+
+        .qp-ects-stepper:focus-within {
+            border-color: #ca5116;
+            box-shadow: 0 0 0 2px rgba(202, 81, 22, 0.18);
+        }
+
+        .qp-ects-btn {
+            width: 22px;
+            border: none;
+            background: transparent;
+            color: #115E67;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            user-select: none;
+            padding: 0;
+            transition: background 0.15s, color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .qp-ects-btn:hover {
+            background: #ca5116;
+            color: #fff;
+        }
+
+        .qp-ects-btn:active {
+            background: #a33e0f;
+        }
+
+        .qp-ects-btn:disabled {
+            color: #c8cdd6;
+            background: transparent;
+            cursor: not-allowed;
+        }
+
+        .qp-ects-input {
+            width: 42px;
+            padding: 0;
+            border: none;
+            border-left: 1px solid #e3e8f0;
+            border-right: 1px solid #e3e8f0;
             font-size: 0.88em;
             font-family: inherit;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
             color: #222;
             background: #fff;
-            text-align: right;
+            text-align: center;
             outline: none;
-            transition: border-color 0.15s;
         }
 
-        .qp-ects-input:focus {
-            border-color: #ca5116;
-        }
-
-        /* spin buttons are distracting in such a narrow field – hide them */
+        /* hide native spin buttons – we have our own */
         .qp-ects-input::-webkit-outer-spin-button,
         .qp-ects-input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -206,7 +254,11 @@
 
 <div class="qp-row" style="margin-top:10px;">
     <span class="qp-label">Gesamt-ECTS</span>
-    <input class="qp-ects-input" id="qp-total-ects" max="999" min="1" step="1" type="number" value="180"/>
+    <div class="qp-ects-stepper">
+        <button aria-label="ECTS verringern" class="qp-ects-btn" id="qp-ects-minus" tabindex="-1" type="button">−</button>
+        <input class="qp-ects-input" id="qp-total-ects" inputmode="numeric" max="999" min="1" step="1" type="number" value="180"/>
+        <button aria-label="ECTS erhöhen" class="qp-ects-btn" id="qp-ects-plus" tabindex="-1" type="button">+</button>
+    </div>
 </div>
 
 <hr/>

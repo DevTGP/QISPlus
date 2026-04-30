@@ -23,6 +23,11 @@ const statusEl   = /** @type {HTMLElement} */      (document.getElementById('qp-
 const versionEl  = /** @type {HTMLElement} */      (document.getElementById('qp-version'));
 const updateEl   = /** @type {HTMLElement} */      (document.getElementById('qp-update'));
 const ectsInput  = /** @type {HTMLInputElement} */ (document.getElementById('qp-total-ects'));
+const ectsMinus  = /** @type {HTMLButtonElement} */ (document.getElementById('qp-ects-minus'));
+const ectsPlus   = /** @type {HTMLButtonElement} */ (document.getElementById('qp-ects-plus'));
+
+const ECTS_MIN = 1;
+const ECTS_MAX = 999;
 
 // ---------------------------------------------------------------------------
 // Toggle (Notenübersicht ein/aus)
@@ -116,20 +121,45 @@ async function renderUpdateBanner() {
 // Gesamt-ECTS input
 // ---------------------------------------------------------------------------
 
+function updateStepperButtons() {
+  const v = parseInt(ectsInput.value, 10);
+  ectsMinus.disabled = !Number.isFinite(v) || v <= ECTS_MIN;
+  ectsPlus.disabled  = !Number.isFinite(v) || v >= ECTS_MAX;
+}
+
 async function initEctsInput() {
   const stored = await getTotalEcts();
   ectsInput.value = String(stored);
+  updateStepperButtons();
 }
 
-ectsInput.addEventListener('change', async () => {
-  const raw = parseInt(ectsInput.value, 10);
-  if (!Number.isFinite(raw) || raw < 1 || raw > 999) {
+async function commitEcts(raw) {
+  if (!Number.isFinite(raw) || raw < ECTS_MIN || raw > ECTS_MAX) {
     // Reset to the currently stored value so the field doesn't show garbage
     ectsInput.value = String(await getTotalEcts());
+    updateStepperButtons();
     return;
   }
+  ectsInput.value = String(raw);
+  updateStepperButtons();
   await setTotalEcts(raw);
   // storage.onChanged in widget.js will pick this up automatically
+}
+
+ectsInput.addEventListener('change', () => {
+  commitEcts(parseInt(ectsInput.value, 10));
+});
+
+ectsInput.addEventListener('input', updateStepperButtons);
+
+ectsMinus.addEventListener('click', () => {
+  const v = parseInt(ectsInput.value, 10) || 0;
+  commitEcts(Math.max(ECTS_MIN, v - 1));
+});
+
+ectsPlus.addEventListener('click', () => {
+  const v = parseInt(ectsInput.value, 10) || 0;
+  commitEcts(Math.min(ECTS_MAX, v + 1));
 });
 
 // ---------------------------------------------------------------------------
