@@ -36,10 +36,14 @@ const ALARM_PERIOD_MINUTES = Math.max(1, Math.round(UPDATE_TTL_MS / 60000));
  * event) to avoid a redundant cache read; otherwise we'll fetch it ourselves.
  *
  * @param {import('./src/update.js').UpdateInfo|null} [info]
+ * @param {Object} [opts]
+ * @param {boolean} [opts.force=false]  Bypass the cache TTL when computing
+ *   the state. Used on install/update so a stale cache from a previous build
+ *   doesn't keep showing the old "latest" version for up to UPDATE_TTL_MS.
  */
-async function refreshBadge(info) {
+async function refreshBadge(info, { force = false } = {}) {
   try {
-    const data      = info === undefined ? await getUpdateInfo() : info;
+    const data      = info === undefined ? await getUpdateInfo({ force }) : info;
     const hasUpdate = !!(data && data.hasUpdate);
 
     if (hasUpdate) {
@@ -82,7 +86,10 @@ async function ensureAlarm() {
 
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureAlarm();
-  await refreshBadge();
+  // Force a fresh check on install/update: a cached "latest version" from a
+  // previous build (e.g. before the dual-source release/tag lookup landed)
+  // would otherwise stick around for the full TTL.
+  await refreshBadge(undefined, { force: true });
 });
 
 chrome.runtime.onStartup.addListener(async () => {

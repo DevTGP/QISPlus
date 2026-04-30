@@ -158,15 +158,49 @@ async function fetchLatestTag() {
 }
 
 /**
- * Resolve the latest version by trying /releases/latest first, then falling
- * back to /tags. Returns null if both come up empty.
+ * Resolve the latest version by querying BOTH /releases/latest and /tags in
+ * parallel and returning whichever has the higher semver.
+ *
+ * Why not just /releases/latest? Because GitHub only treats formally published,
+ * non-prerelease entries as "latest". A repo that ships via plain Git tags
+ * (or marks releases as pre-release) would otherwise be stuck on an old
+ * version forever, even though newer tags exist – which is exactly the bug
+ * that motivated this implementation.
+ *
+ * Tie-breaking: when both sources report the same version we keep the Release
+ * record, because it usually carries a better downloadUrl (an uploaded asset)
+ * than the synthetic /archive/refs/tags/*.zip link the tag fallback produces.
+ *
+ * Error handling: if one source throws and the other succeeds, we use the
+ * successful one. Only when both fail does the rejection propagate, so the
+ * outer `getUpdateInfo` catch can fall back to the cached value.
  *
  * @returns {Promise<CachedRelease|null>}
  */
 async function fetchLatestVersion() {
-  const fromRelease = await fetchLatestRelease();
-  if (fromRelease) return fromRelease;
-  return await fetchLatestTag();
+  const settled = await Promise.allSettled([
+    fetchLatestRelease(),  // [0] – formal Releases (excl. pre-releases)
+    fetchLatestTag(),      // [1] – every Git tag in the repo
+  ]);
+
+  const fromRelease = settled[0].status === 'fulfilled' ? settled[0].value : null;
+  const fromTag     = settled[1].status === 'fulfilled' ? settled[1].value : null;
+
+  if (!fromRelease && !fromTag) {
+    // Both sources were empty. If one of them actually errored (vs. just
+    // returned null for "nothing published yet"), surface that error so the
+    // caller can decide whether to keep the previous cache.
+    const firstError = settled.find(r => r.status === 'rejected');
+    if (firstError) throw firstError.reason;
+    return null;
+  }
+  if (!fromRelease) return fromTag;
+  if (!fromTag)     return fromRelease;
+
+  // Both succeeded – pick the higher semver, prefer Release on a tie.
+  return compareVersions(fromTag.version, fromRelease.version) > 0
+    ? fromTag
+    : fromRelease;
 }
 
 // ---------------------------------------------------------------------------
