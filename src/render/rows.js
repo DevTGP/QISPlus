@@ -137,6 +137,183 @@ export function buildGroupHeader(semLabel, semStats, isCurrentSem) {
 }
 
 // ---------------------------------------------------------------------------
+// renderPassedGradeCell – passed-row grade cell with click-to-edit "what-if"
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the contents of the grade cell for a passed module, including the
+ * per-module what-if grade UI (click to edit, mini input, reset ×).
+ *
+ * Visual states:
+ *   • Normal:   1.70                 (clickable to open input)
+ *   • What-If:  1̶.̶7̶0̶ → 1.00 ×        (original strikethrough + new + reset)
+ *   • Improve:  1.70 (1.00)          (when improvement sim active and module is improvable)
+ *
+ * @param {HTMLTableCellElement} cell
+ * @param {import('../stats.js').ModuleInfo & { _isWhatIf?: boolean, _origGrade?: number }} m
+ * @param {boolean} withImprovement
+ * @param {((name: string, value: number|null, commit: boolean) => void)|null} onWhatIfChange
+ */
+function renderPassedGradeCell(cell, m, withImprovement, onWhatIfChange) {
+  cell.innerHTML = '';
+
+  if (m._isWhatIf) {
+    // Original (strikethrough)
+    const orig = el('span', {
+      color:          COLORS.GREY_TEXT,
+      textDecoration: 'line-through',
+      fontSize:       '0.85em',
+    });
+    orig.textContent = fmt(m._origGrade);
+    cell.append(orig);
+
+    const arrow = el('span', {
+      color:    COLORS.GREY_TEXT,
+      fontSize: '0.82em',
+      margin:   '0 4px',
+    });
+    arrow.textContent = '→';
+    cell.append(arrow);
+
+    // New (what-if) grade
+    const neu = el('span', {
+      fontWeight: '700',
+      color:      gradeColor(m.passedGrade),
+    });
+    neu.textContent = fmt(m.passedGrade);
+    cell.append(neu);
+
+    if (onWhatIfChange) {
+      const x = el('span', {
+        marginLeft: '6px',
+        color:      COLORS.GREY_TEXT,
+        cursor:     'pointer',
+        fontSize:   '0.95em',
+        fontWeight: '700',
+        userSelect: 'none',
+      });
+      x.textContent = '×';
+      x.title = 'Was-wäre-wenn-Note entfernen';
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onWhatIfChange(m.name, null, true);
+      });
+      cell.append(x);
+    }
+  } else {
+    const gradeSpan = el('span', {
+      fontWeight: '600',
+      color:      gradeColor(m.passedGrade),
+    });
+    gradeSpan.textContent = fmt(m.passedGrade);
+    cell.append(gradeSpan);
+
+    // Improvement simulation hint
+    if (withImprovement && m.improvable) {
+      const hint = el('span', {
+        color:      COLORS.GREEN,
+        fontSize:   '0.8em',
+        marginLeft: '4px',
+      });
+      hint.textContent = '(1.00)';
+      cell.append(hint);
+    }
+  }
+
+  // Click-to-edit (only if a callback was supplied and we have a real grade)
+  if (onWhatIfChange) {
+    cell.style.cursor = 'pointer';
+    cell.title        = m._isWhatIf
+      ? 'Klicken um Was-wäre-wenn-Note zu ändern'
+      : 'Klicken für Was-wäre-wenn-Note';
+
+    cell.addEventListener('click', (e) => {
+      // Ignore clicks on the reset × (it stops propagation, but be defensive)
+      if (cell.querySelector('input')) return;
+      openWhatIfEditor(cell, m, onWhatIfChange);
+    });
+  }
+}
+
+/**
+ * Replace the cell content with a small numeric input for editing the
+ * what-if grade. Live updates fire on every keystroke (commit=false);
+ * Enter / blur trigger the final commit (commit=true), Esc cancels.
+ *
+ * @param {HTMLTableCellElement} cell
+ * @param {import('../stats.js').ModuleInfo & { _isWhatIf?: boolean, _origGrade?: number }} m
+ * @param {(name: string, value: number|null, commit: boolean) => void} onWhatIfChange
+ */
+function openWhatIfEditor(cell, m, onWhatIfChange) {
+  cell.innerHTML = '';
+
+  const inp = document.createElement('input');
+  inp.type        = 'number';
+  inp.min         = '1.0';
+  inp.max         = '4.0';
+  inp.step        = '0.1';
+  inp.value       = String(m._isWhatIf ? m.passedGrade : m._origGrade ?? m.passedGrade);
+  inp.placeholder = 'Note';
+  Object.assign(inp.style, {
+    width:        '60px',
+    padding:      '2px 4px',
+    border:       `1px solid ${COLORS.TEAL}`,
+    borderRadius: '4px',
+    fontSize:     '0.9em',
+    fontFamily:   'inherit',
+    textAlign:    'center',
+    outline:      'none',
+    background:   '#fff',
+  });
+
+  const parseVal = () => {
+    const raw = inp.value.replace(',', '.').trim();
+    if (raw === '') return null;
+    const v = parseFloat(raw);
+    if (!Number.isFinite(v) || v < 1.0 || v > 4.0) return null;
+    return Math.round(v * 100) / 100;
+  };
+
+  let cancelled = false;
+  let committed = false;
+
+  // Live preview on every input
+  inp.addEventListener('input', () => {
+    onWhatIfChange(m.name, parseVal(), /*commit*/ false);
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      inp.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelled = true;
+      // Restore the prior state: original (no whatIf) or the previously
+      // committed whatIf value. A commit=true call ensures full re-render
+      // which restores the cell to its non-edit appearance.
+      const restore = m._isWhatIf ? m.passedGrade : null;
+      committed = true;
+      onWhatIfChange(m.name, restore, true);
+    }
+  });
+
+  inp.addEventListener('blur', () => {
+    if (committed) return;
+    committed = true;
+    if (cancelled) return;
+    onWhatIfChange(m.name, parseVal(), /*commit*/ true);
+  });
+
+  // Prevent click bubbling from re-opening the editor
+  inp.addEventListener('click', (e) => e.stopPropagation());
+
+  cell.append(inp);
+  inp.focus();
+  inp.select();
+}
+
+// ---------------------------------------------------------------------------
 // buildModuleRow
 // ---------------------------------------------------------------------------
 
@@ -160,9 +337,15 @@ const ROW_BG = {
  *                                        improvementSem / ongoingSem).
  * @param {string}  sortCol           Current sort column (kept for callers,
  *                                        currently unused inside this fn)
+ * @param {Object}  [opts]
+ * @param {(name: string, value: number|null, commit: boolean) => void} [opts.onWhatIfChange]
+ *        Callback invoked when the user edits a hypothetical grade. `value`
+ *        is `null` to clear. `commit` distinguishes live preview (false,
+ *        stats-only update) from final commit (true, full re-render).
  * @returns {HTMLTableRowElement}
  */
-export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
+export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol, opts = {}) {
+  const { onWhatIfChange = null } = opts;
   const row = document.createElement('tr');
   const bg  = ROW_BG[rowType][rowIndex % 2];
 
@@ -209,23 +392,7 @@ export function buildModuleRow(m, rowIndex, withImprovement, rowType, sortCol) {
 
   if (rowType === 'passed') {
     if (m.passedGrade !== null) {
-      const gradeSpan = el('span', {
-        fontWeight: '600',
-        color:      gradeColor(m.passedGrade),
-      });
-      gradeSpan.textContent = fmt(m.passedGrade);
-      gradeCell.append(gradeSpan);
-
-      // Improvement simulation hint
-      if (withImprovement && m.improvable) {
-        const hint = el('span', {
-          color:     COLORS.GREEN,
-          fontSize:  '0.8em',
-          marginLeft: '4px',
-        });
-        hint.textContent = '(1.00)';
-        gradeCell.append(hint);
-      }
+      renderPassedGradeCell(gradeCell, m, withImprovement, onWhatIfChange);
     }
   } else if (rowType === 'improving') {
     // Show current grade → ? (or "1.00" assumption when simulation is on)

@@ -144,6 +144,8 @@ export function buildWidget(parseResult) {
   let totalEcts   = DEFAULT_TOTAL_ECTS;
   let targetGrade = null;             // Notenziel-Reverse-Calculator input (null = no input)
   let lastGStats  = null;             // last calcGlobalStats result, used by updateReverseCalc
+  /** @type {Map<string, number>} */
+  const whatIfGrades = new Map();     // moduleName → hypothetical grade
 
   // ------------------------------------------------------------------
   // Build the stable module map (does not change with UI state)
@@ -234,12 +236,86 @@ export function buildWidget(parseResult) {
   render();
 
   // ------------------------------------------------------------------
+  // applyWhatIf – clone semester groups and override passedGrade for
+  // modules with a hypothetical "what-if" entry. The overrides flow
+  // transparently through calcSemStats / calcGlobalStats / sortModules
+  // and cascade into the Notenziel-Reverse-Calculator and Bestm.-Ø.
+  // Modules with a what-if value are also marked improvable=false so
+  // the global improvement toggle does not also stomp on the user's
+  // explicit per-module input.
+  // ------------------------------------------------------------------
+  function applyWhatIf(groups) {
+    if (whatIfGrades.size === 0) return groups;
+    const overrideOne = (m) => {
+      if (whatIfGrades.has(m.name) && m.passedGrade !== null) {
+        return {
+          ...m,
+          passedGrade: whatIfGrades.get(m.name),
+          improvable:  false,
+          _isWhatIf:   true,
+          _origGrade:  m.passedGrade,
+        };
+      }
+      return m;
+    };
+    return groups.map(g => ({
+      ...g,
+      passed:    g.passed.map(overrideOne),
+      improving: g.improving.map(overrideOne),
+    }));
+  }
+
+  // ------------------------------------------------------------------
+  // What-if change handler – fed to every passed-row's grade cell
+  // ------------------------------------------------------------------
+  function onWhatIfChange(name, value, commit) {
+    if (value === null || !Number.isFinite(value)) {
+      whatIfGrades.delete(name);
+    } else {
+      whatIfGrades.set(name, value);
+    }
+    if (commit) {
+      render();
+    } else {
+      updateStatsOnly();
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // updateStatsOnly – cheap re-calc that updates progress / badges /
+  // reverse-calculator without rebuilding the table. Used for live
+  // preview while the user types in a per-module what-if input so the
+  // input keeps focus.
+  // ------------------------------------------------------------------
+  function updateStatsOnly() {
+    const groups   = buildSemesterGroups(attempts, moduleMap, currentSemNum, showHistory);
+    markImprovable(groups);
+    const eff      = applyWhatIf(groups);
+    const gStats   = calcGlobalStats(eff, improve, currentSemNum, totalEcts);
+    lastGStats     = gStats;
+
+    progressBox.innerHTML = '';
+    progressBox.append(buildProgressBar(gStats.earnedEcts, gStats.remaining, totalEcts));
+
+    badgesBox.innerHTML = '';
+    badgesBox.append(buildStatBadges(
+      gStats.currentAvg,
+      gStats.earnedEcts,
+      gStats.currentAvg !== null ? gStats.bestAchievable : null,
+    ));
+
+    updateReverseCalc();
+    updateCtrlBar();
+  }
+
+  // ------------------------------------------------------------------
   // render()
   // ------------------------------------------------------------------
   function render() {
     const groups  = buildSemesterGroups(attempts, moduleMap, currentSemNum, showHistory);
     const impSem  = markImprovable(groups);
-    const gStats  = calcGlobalStats(groups, improve, currentSemNum, totalEcts);
+    const eff     = applyWhatIf(groups);
+    const gStats  = calcGlobalStats(eff, improve, currentSemNum, totalEcts);
     lastGStats    = gStats;
 
     // Update progress bar
@@ -273,9 +349,9 @@ export function buildWidget(parseResult) {
     const { table, tbody } = buildTable(sortCol, sortDir, onHeaderClick);
 
     if (sortCol === 'group') {
-      renderGrouped(tbody, groups);
+      renderGrouped(tbody, eff);
     } else {
-      renderFlat(tbody, groups);
+      renderFlat(tbody, eff);
     }
 
     tableBox.append(table);
@@ -302,7 +378,7 @@ export function buildWidget(parseResult) {
       tbody.append(buildGroupHeader(g.semLabel, semStats, isCurrent));
 
       for (const m of g.passed) {
-        tbody.append(buildModuleRow(m, passedIdx++, improve, 'passed', sortCol));
+        tbody.append(buildModuleRow(m, passedIdx++, improve, 'passed', sortCol, { onWhatIfChange }));
       }
       for (const m of g.improving) {
         tbody.append(buildModuleRow(m, improvingIdx++, improve, 'improving', sortCol));
@@ -326,7 +402,7 @@ export function buildWidget(parseResult) {
     const sorted    = sortModules(allPassed, sortCol, sortDir);
 
     sorted.forEach((m, i) => {
-      tbody.append(buildModuleRow(m, i, improve, 'passed', sortCol));
+      tbody.append(buildModuleRow(m, i, improve, 'passed', sortCol, { onWhatIfChange }));
     });
   }
 
@@ -660,16 +736,38 @@ export function buildWidget(parseResult) {
       render();
     });
 
-    bar.append(resetBtn, histBtn);
-    bar._resetBtn = resetBtn;
-    bar._histBtn  = histBtn;
+    // What-If Reset button (only visible when ≥1 hypothetical grade is set)
+    const whatIfBtn = el('button', {
+      border:       `1px solid ${COLORS.TEAL_LIGHT}`,
+      background:   COLORS.WHITE,
+      color:        COLORS.TEAL_LIGHT,
+      borderRadius: '4px',
+      padding:      '3px 10px',
+      fontSize:     '0.80em',
+      cursor:       'pointer',
+      transition:   'opacity 0.15s',
+      display:      'none',
+    });
+    whatIfBtn.id = 'qp-whatif-reset';
+
+    whatIfBtn.addEventListener('click', () => {
+      if (whatIfGrades.size === 0) return;
+      whatIfGrades.clear();
+      render();
+    });
+
+    bar.append(resetBtn, histBtn, whatIfBtn);
+    bar._resetBtn  = resetBtn;
+    bar._histBtn   = histBtn;
+    bar._whatIfBtn = whatIfBtn;
 
     return bar;
   }
 
   function updateCtrlBar() {
-    const resetBtn = ctrlBar._resetBtn;
-    const histBtn  = ctrlBar._histBtn;
+    const resetBtn  = ctrlBar._resetBtn;
+    const histBtn   = ctrlBar._histBtn;
+    const whatIfBtn = ctrlBar._whatIfBtn;
     if (!resetBtn || !histBtn) return;
 
     const isDefault = sortCol === 'group' && sortDir === 1;
@@ -689,6 +787,18 @@ export function buildWidget(parseResult) {
     // Highlight when active
     histBtn.style.background    = showHistory && histEnabled ? COLORS.TEAL    : COLORS.WHITE;
     histBtn.style.color         = showHistory && histEnabled ? COLORS.WHITE   : COLORS.TEAL;
+
+    // What-If reset button visibility / label
+    if (whatIfBtn) {
+      const n = whatIfGrades.size;
+      if (n > 0) {
+        whatIfBtn.style.display = '';
+        whatIfBtn.textContent   = `↺ Was-wäre-wenn zurücksetzen (${n})`;
+        whatIfBtn.title         = `${n} hypothetische Note(n) aktiv`;
+      } else {
+        whatIfBtn.style.display = 'none';
+      }
+    }
   }
 
   return widget;
