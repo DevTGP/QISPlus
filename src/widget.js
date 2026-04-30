@@ -10,7 +10,7 @@
 // updates the stats displays in-place – no full DOM replacement.
 // ---------------------------------------------------------------------------
 
-import { WIDGET_ID, STORAGE_KEYS, COLORS, BORDER_RADIUS } from './constants.js';
+import { WIDGET_ID, STORAGE_KEYS, COLORS, BORDER_RADIUS, DEFAULT_TOTAL_ECTS } from './constants.js';
 import {
   buildModuleMap,
   buildSemesterGroups,
@@ -26,7 +26,7 @@ import {
   buildModuleRow,
   buildHistoricalRow,
 } from './render/index.js';
-import { getBool, setBool } from './storage.js';
+import { getBool, setBool, getTotalEcts } from './storage.js';
 
 // ---------------------------------------------------------------------------
 // markImprovable – tag every module whose grade gets replaced by 1.0 in the
@@ -134,10 +134,11 @@ export function buildWidget(parseResult) {
   // ------------------------------------------------------------------
   // Mutable UI state
   // ------------------------------------------------------------------
-  let sortCol     = 'group';   // 'group'|'name'|'grade'|'ects'|'semester'
-  let sortDir     = 1;         // 1 = asc, -1 = desc
+  let sortCol     = 'group';          // 'group'|'name'|'grade'|'ects'|'semester'
+  let sortDir     = 1;                // 1 = asc, -1 = desc
   let improve     = false;
   let showHistory = false;
+  let totalEcts   = DEFAULT_TOTAL_ECTS;
 
   // ------------------------------------------------------------------
   // Build the stable module map (does not change with UI state)
@@ -191,17 +192,34 @@ export function buildWidget(parseResult) {
   widget.append(title, progressBox, badgesBox, improveBar, ctrlBar, tableBox);
 
   // ------------------------------------------------------------------
-  // Restore persisted toggle states
+  // Restore persisted toggle states + configurable ECTS target
   // ------------------------------------------------------------------
   Promise.all([
     getBool(STORAGE_KEYS.IMPROVE,  false),
     getBool(STORAGE_KEYS.HISTORY,  false),
-  ]).then(([imp, hist]) => {
+    getTotalEcts(),
+  ]).then(([imp, hist, ects]) => {
     improve     = imp;
     showHistory = hist;
+    totalEcts   = ects;
     syncImproveToggle();
     render();
   });
+
+  // React to popup changes (TOTAL_ECTS written by popup.js) so the widget
+  // updates live while the popup is open.
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      if (STORAGE_KEYS.TOTAL_ECTS in changes) {
+        const newVal = Number(changes[STORAGE_KEYS.TOTAL_ECTS].newValue);
+        if (Number.isFinite(newVal) && newVal >= 1) {
+          totalEcts = newVal;
+          render();
+        }
+      }
+    });
+  }
 
   // Run an initial render immediately (with default state) so the
   // widget is visible before storage resolves.
@@ -213,11 +231,11 @@ export function buildWidget(parseResult) {
   function render() {
     const groups  = buildSemesterGroups(attempts, moduleMap, currentSemNum, showHistory);
     const impSem  = markImprovable(groups);
-    const gStats  = calcGlobalStats(groups, improve, currentSemNum);
+    const gStats  = calcGlobalStats(groups, improve, currentSemNum, totalEcts);
 
     // Update progress bar
     progressBox.innerHTML = '';
-    progressBox.append(buildProgressBar(gStats.earnedEcts, gStats.remaining));
+    progressBox.append(buildProgressBar(gStats.earnedEcts, gStats.remaining, totalEcts));
 
     // Update badges (Ø, ECTS, bestmöglicher Schnitt)
     badgesBox.innerHTML = '';

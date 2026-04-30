@@ -7,7 +7,7 @@
 // or widget code.  All inputs are plain JS objects produced by parser.js.
 // ---------------------------------------------------------------------------
 
-import { TOTAL_ECTS }              from './constants.js';
+import { DEFAULT_TOTAL_ECTS }      from './constants.js';
 import { groupBy, minBy, maxBy }   from './utils.js';
 
 // ---------------------------------------------------------------------------
@@ -339,9 +339,10 @@ export function calcSemStats(items) {
  * @param {SemesterGroup[]} semGroups
  * @param {boolean}         withImprovement
  * @param {number}          currentSemNum   (unused here but kept for API symmetry)
+ * @param {number}          [totalEcts]     Degree target; defaults to DEFAULT_TOTAL_ECTS
  * @returns {GlobalStats}
  */
-export function calcGlobalStats(semGroups, withImprovement, currentSemNum) {
+export function calcGlobalStats(semGroups, withImprovement, currentSemNum, totalEcts = DEFAULT_TOTAL_ECTS) {
   let earnedEcts  = 0;
   let weightedSum = 0;
 
@@ -355,15 +356,15 @@ export function calcGlobalStats(semGroups, withImprovement, currentSemNum) {
     }
   }
 
-  const remaining      = Math.max(0, TOTAL_ECTS - earnedEcts);
+  const remaining      = Math.max(0, totalEcts - earnedEcts);
   const currentAvg     = earnedEcts > 0
     ? weightedSum / earnedEcts
     : null;
 
   // Best achievable = (current weighted sum + all remaining credits at 1.0)
-  //                   / TOTAL_ECTS
-  const bestAchievable = TOTAL_ECTS > 0
-    ? (weightedSum + remaining * 1.0) / TOTAL_ECTS
+  //                   / totalEcts
+  const bestAchievable = totalEcts > 0
+    ? (weightedSum + remaining * 1.0) / totalEcts
     : 0;
 
   return { earnedEcts, weightedSum, currentAvg, bestAchievable, remaining };

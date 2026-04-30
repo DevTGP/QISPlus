@@ -4,7 +4,7 @@
 // QISPlus – progress bar + badge builders
 // ---------------------------------------------------------------------------
 
-import { COLORS, TOTAL_ECTS, BORDER_RADIUS } from '../constants.js';
+import { COLORS, DEFAULT_TOTAL_ECTS, BORDER_RADIUS } from '../constants.js';
 import { el, fmt, gradeColor }               from './core.js';
 
 // ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ export function buildBadge(html, bgColor, extraStyles = {}) {
  * @param {number} [totalEcts]  Defaults to TOTAL_ECTS constant
  * @returns {HTMLElement}
  */
-export function buildProgressBar(earnedEcts, remaining, totalEcts = TOTAL_ECTS) {
+export function buildProgressBar(earnedEcts, remaining, totalEcts = DEFAULT_TOTAL_ECTS) {
   const pct     = totalEcts > 0 ? Math.min(100, (earnedEcts / totalEcts) * 100) : 0;
   const pctStr  = pct.toFixed(1);
 

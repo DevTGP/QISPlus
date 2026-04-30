@@ -6,8 +6,8 @@
 // are needed to avoid magic strings / numbers scattered across the codebase.
 // ---------------------------------------------------------------------------
 
-/** Total ECTS credits required for the degree. Adjust if your programme differs. */
-export const TOTAL_ECTS = 180;
+/** Default total ECTS credits required for the degree. Configurable via the popup. */
+export const DEFAULT_TOTAL_ECTS = 180;
 
 /** DOM id of the injected widget element. */
 export const WIDGET_ID = 'qisplus-widget';
@@ -20,6 +20,7 @@ export const STORAGE_KEYS = /** @type {const} */ ({
   IMPROVE:       'qisplus_improve',
   HISTORY:       'qisplus_history',
   UPDATE_CACHE:  'qisplus_update_cache',
+  TOTAL_ECTS:    'qisplus_total_ects',
 });
 
 // ---------------------------------------------------------------------------

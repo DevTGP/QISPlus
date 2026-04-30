@@ -7,7 +7,13 @@
 // have to deal with callback-style storage APIs or repeat error-handling code.
 // All functions are safe to call even if chrome.storage is undefined (e.g.
 // during unit tests in a non-extension context – they will return fallbacks).
+//
+// getTotalEcts / setTotalEcts are the typed helpers for the configurable
+// degree ECTS target. They live here so the popup and the widget both
+// use the same sanitization logic.
 // ---------------------------------------------------------------------------
+
+import { DEFAULT_TOTAL_ECTS, STORAGE_KEYS } from './constants.js';
 
 const _store = () =>
   typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
@@ -57,6 +63,37 @@ export async function getBool(key, defaultValue = true) {
  */
 export function setBool(key, value) {
   return storageSet({ [key]: Boolean(value) });
+}
+
+// ---------------------------------------------------------------------------
+// Configurable total-ECTS helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Read the user-configured total-ECTS target from storage.
+ * Falls back to DEFAULT_TOTAL_ECTS when the key is absent or invalid.
+ *
+ * @returns {Promise<number>}
+ */
+export async function getTotalEcts() {
+  const result = await storageGet(STORAGE_KEYS.TOTAL_ECTS);
+  const raw    = result[STORAGE_KEYS.TOTAL_ECTS];
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 1 && parsed <= 999
+    ? parsed
+    : DEFAULT_TOTAL_ECTS;
+}
+
+/**
+ * Persist the user-configured total-ECTS target.
+ * Clamps the value to the range [1, 999] and rounds to an integer.
+ *
+ * @param {number} value
+ * @returns {Promise<void>}
+ */
+export function setTotalEcts(value) {
+  const safe = Math.max(1, Math.min(999, Math.round(Number(value) || DEFAULT_TOTAL_ECTS)));
+  return storageSet({ [STORAGE_KEYS.TOTAL_ECTS]: safe });
 }
 
 /**

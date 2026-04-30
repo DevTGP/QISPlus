@@ -10,17 +10,19 @@
 //   3. Check GitHub for newer releases and show a banner if one exists.
 // ---------------------------------------------------------------------------
 
-import { STORAGE_KEYS, GITHUB }    from './src/constants.js';
-import { storageGet, storageSet, sendToActiveTab } from './src/storage.js';
-import { getUpdateInfo, getCurrentVersion }        from './src/update.js';
+import { STORAGE_KEYS, GITHUB }                     from './src/constants.js';
+import { storageGet, storageSet, sendToActiveTab,
+         getTotalEcts, setTotalEcts }               from './src/storage.js';
+import { getUpdateInfo, getCurrentVersion }          from './src/update.js';
 
 // ---------------------------------------------------------------------------
 // DOM refs
 // ---------------------------------------------------------------------------
-const toggle    = /** @type {HTMLInputElement} */ (document.getElementById('qp-toggle'));
-const statusEl  = /** @type {HTMLElement} */      (document.getElementById('qp-status'));
-const versionEl = /** @type {HTMLElement} */      (document.getElementById('qp-version'));
-const updateEl  = /** @type {HTMLElement} */      (document.getElementById('qp-update'));
+const toggle     = /** @type {HTMLInputElement} */ (document.getElementById('qp-toggle'));
+const statusEl   = /** @type {HTMLElement} */      (document.getElementById('qp-status'));
+const versionEl  = /** @type {HTMLElement} */      (document.getElementById('qp-version'));
+const updateEl   = /** @type {HTMLElement} */      (document.getElementById('qp-update'));
+const ectsInput  = /** @type {HTMLInputElement} */ (document.getElementById('qp-total-ects'));
 
 // ---------------------------------------------------------------------------
 // Toggle (Notenübersicht ein/aus)
@@ -111,9 +113,30 @@ async function renderUpdateBanner() {
 }
 
 // ---------------------------------------------------------------------------
+// Gesamt-ECTS input
+// ---------------------------------------------------------------------------
+
+async function initEctsInput() {
+  const stored = await getTotalEcts();
+  ectsInput.value = String(stored);
+}
+
+ectsInput.addEventListener('change', async () => {
+  const raw = parseInt(ectsInput.value, 10);
+  if (!Number.isFinite(raw) || raw < 1 || raw > 999) {
+    // Reset to the currently stored value so the field doesn't show garbage
+    ectsInput.value = String(await getTotalEcts());
+    return;
+  }
+  await setTotalEcts(raw);
+  // storage.onChanged in widget.js will pick this up automatically
+});
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 
 renderVersion();
 initToggle();
+initEctsInput();
 renderUpdateBanner();

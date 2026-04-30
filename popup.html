@@ -114,6 +114,36 @@
             text-align: right;
         }
 
+        /* ---------- ECTS input ---------- */
+        .qp-ects-input {
+            width: 60px;
+            padding: 2px 6px;
+            border: 1px solid #ccd3df;
+            border-radius: 4px;
+            font-size: 0.88em;
+            font-family: inherit;
+            color: #222;
+            background: #fff;
+            text-align: right;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .qp-ects-input:focus {
+            border-color: #ca5116;
+        }
+
+        /* spin buttons are distracting in such a narrow field – hide them */
+        .qp-ects-input::-webkit-outer-spin-button,
+        .qp-ects-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .qp-ects-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
         /* ---------- Update banner ---------- */
         .qp-update {
             display: none;            /* shown by popup.js when an update exists */
@@ -173,6 +203,11 @@
 </div>
 
 <div class="qp-status" id="qp-status">Aktiv</div>
+
+<div class="qp-row" style="margin-top:10px;">
+    <span class="qp-label">Gesamt-ECTS</span>
+    <input class="qp-ects-input" id="qp-total-ects" max="999" min="1" step="1" type="number" value="180"/>
+</div>
 
 <hr/>
 <div class="qp-version" id="qp-version">v–</div>
